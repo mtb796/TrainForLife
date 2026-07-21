@@ -75,6 +75,7 @@ section[id], header[id] { scroll-margin-top: 72px; }
   text-transform: uppercase;
   letter-spacing: 2px;
   line-height: 1.12;
+  text-wrap: balance;
 }
 
 .serif-accent {
@@ -199,6 +200,8 @@ section[id], header[id] { scroll-margin-top: 72px; }
   transition: box-shadow 0.3s var(--ease-out-quart);
 }
 .nav.scrolled { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45); }
+.nav { transition: box-shadow 0.3s var(--ease-out-quart), transform 0.4s var(--ease-out-expo); }
+.nav.hidden { transform: translateY(-100%); }
 
 .nav-inner {
   max-width: 1200px;
@@ -465,12 +468,15 @@ section[id], header[id] { scroll-margin-top: 72px; }
 }
 
 .program-media { height: 240px; overflow: hidden; }
+.program-media .plx { height: 100%; will-change: transform; }
 .program-media img {
   width: 100%; height: 100%;
   object-fit: cover;
-  transition: transform 0.7s var(--ease-out-quart);
+  transform: scale(1.14);
+  filter: grayscale(0.35) contrast(1.04);
+  transition: transform 0.7s var(--ease-out-quart), filter 0.7s var(--ease-out-quart);
 }
-.program-card:hover .program-media img { transform: scale(1.06); }
+.program-card:hover .program-media img { transform: scale(1.2); filter: grayscale(0) contrast(1); }
 
 .program-body { padding: 28px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
 .program-title { margin: 0; font-family: var(--oswald); font-size: 30px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
@@ -683,6 +689,8 @@ section[id], header[id] { scroll-margin-top: 72px; }
   animation-delay: calc(var(--i, 0) * 60ms);
 }
 .event-row:hover { border-color: var(--border-2); transform: translateX(4px); }
+.event-row .event-cta .arrow-glyph { display: inline-block; transition: transform 0.25s var(--ease-out-quart); }
+.event-row:hover .event-cta .arrow-glyph { transform: translateX(5px); }
 
 .event-date { text-align: center; min-width: 52px; }
 .event-day {
@@ -976,8 +984,14 @@ section[id], header[id] { scroll-margin-top: 72px; }
   margin: 0 0 8px;
   font-size: 40px;
   color: var(--primary-hover);
-  animation: starPop 0.6s var(--ease-out-expo) 0.15s both;
 }
+.confirm-star .spark {
+  display: inline-block;
+  animation: starPop 0.6s var(--ease-out-expo) both;
+}
+.confirm-star .s1 { animation-delay: 0.15s; }
+.confirm-star .s2 { font-size: 0.5em; color: var(--accent-text); animation-delay: 0.3s; margin-left: 6px; }
+.confirm-star .s3 { font-size: 0.3em; color: var(--accent-text); animation-delay: 0.42s; margin-left: 4px; }
 @keyframes starPop {
   from { opacity: 0; transform: scale(0.4) rotate(-30deg); }
   to { opacity: 1; transform: scale(1) rotate(0); }
@@ -1146,15 +1160,108 @@ section[id], header[id] { scroll-margin-top: 72px; }
 }
 .reveal.in { opacity: 1; transform: none; }
 
-/* section headings: masked line rise.
+/* section headings: masked rise.
    The hidden state must be opacity-only — a fully clip-path'd element
-   reports zero intersection area, so IntersectionObserver never fires. */
+   reports zero intersection area, so IntersectionObserver never fires.
+   JS splits these headings into per-word masks (.split); unsplit
+   headings fall back to a single-block rise. */
 .reveal-lines { opacity: 0; }
-.reveal-lines.in { opacity: 1; animation: lineReveal 0.8s var(--ease-out-expo) both; }
+.reveal-lines.in { opacity: 1; }
+.reveal-lines.in:not(.split) { animation: lineReveal 0.8s var(--ease-out-expo) both; }
 @keyframes lineReveal {
   from { clip-path: inset(0 0 100% 0); transform: translateY(30px); }
   to { clip-path: inset(-0.25em 0); transform: none; }
 }
+
+.reveal-lines .w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.22em;
+  margin-bottom: -0.22em;
+}
+.reveal-lines .wi { display: inline-block; transform: translateY(115%); }
+.reveal-lines.in .wi {
+  animation: wordUp 0.7s var(--ease-out-expo) both;
+  animation-delay: calc(var(--wi, 0) * 55ms);
+}
+@keyframes wordUp { to { transform: translateY(0); } }
+
+/* ---------- grain overlay ---------- */
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+
+/* ---------- giant background words ---------- */
+
+.bg-word-host { position: relative; overflow: hidden; }
+.bg-word {
+  position: absolute;
+  top: 4%;
+  right: -2%;
+  z-index: 0;
+  font-family: var(--oswald);
+  font-weight: 700;
+  font-size: clamp(120px, 22vw, 320px);
+  line-height: 1;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--border);
+  opacity: 0.55;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform;
+}
+.bg-word-host > .container { position: relative; z-index: 1; }
+
+/* ---------- CTA band ---------- */
+
+.cta-band {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.cta-band .cta-word {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  translate: -50% -50%;
+  font-size: clamp(90px, 16vw, 240px);
+  opacity: 0.4;
+}
+.cta-inner {
+  position: relative;
+  z-index: 1;
+  padding-top: clamp(80px, 12vw, 160px);
+  padding-bottom: clamp(80px, 12vw, 160px);
+}
+.cta-title {
+  margin: 0;
+  font-family: var(--oswald);
+  font-weight: 600;
+  font-size: clamp(40px, 6.5vw, 84px);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  line-height: 1.08;
+}
+.cta-sub {
+  margin: 18px auto 32px;
+  max-width: 480px;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+
+/* ---------- magnetic buttons ---------- */
+
+.magnetic { will-change: transform; }
 
 /* ---------- reduced motion ---------- */
 
@@ -1169,7 +1276,11 @@ section[id], header[id] { scroll-margin-top: 72px; }
   .hero-anim { opacity: 1; transform: none; animation: none; }
   .hero-img { animation: none; }
   .reveal, .reveal-lines { opacity: 1; transform: none; clip-path: none; transition: none; animation: none; }
+  .reveal-lines .wi { transform: none; animation: none; }
   .marquee-track { animation: none; }
   .hero-scrollcue { display: none; }
   .scroll-progress { display: none; }
+  .nav.hidden { transform: none; }
+  .bg-word, .program-media .plx { transform: none !important; }
+  .program-media img { transform: none; filter: none; }
 }

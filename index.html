@@ -10,9 +10,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
+<noscript><style>.reveal,.reveal-lines,.hero-anim{opacity:1 !important;transform:none !important;animation:none !important}</style></noscript>
 </head>
 <body>
 
+<div class="grain" aria-hidden="true"></div>
 <div class="scroll-progress" aria-hidden="true"></div>
 
 <!-- NAV -->
@@ -49,7 +51,7 @@
     </h1>
     <p class="hero-sub hero-anim" style="--d:3">The Strong Academy is the DMV's home for functional conditioning, athletic longevity, and a community that shows up for each other. Two powerhouse programs. One mission.</p>
     <div class="hero-ctas hero-anim" style="--d:4">
-      <a href="#programs" class="btn btn-primary btn-lg">Explore EverSTRONG</a>
+      <a href="#programs" class="btn btn-primary btn-lg magnetic">Explore EverSTRONG</a>
       <a href="#programs" class="btn btn-ghost-light btn-lg">Join TeamSTRONG</a>
     </div>
   </div>
@@ -85,11 +87,13 @@
 </section>
 
 <!-- PROGRAM CARDS -->
-<section id="programs" class="section-tail container">
+<section id="programs" class="section-tail bg-word-host">
+  <div class="bg-word" data-plx="-28" aria-hidden="true">STRONG</div>
+  <div class="container">
   <h2 class="h2 reveal-lines">Two programs. <span class="serif-accent">One mission.</span></h2>
   <div class="program-grid">
     <article class="program-card reveal" style="--i:0">
-      <div class="program-media"><img src="assets/gym-weights.png" alt="EverSTRONG semi-private training session" loading="lazy"></div>
+      <div class="program-media"><div class="plx" data-plx="16"><img src="assets/gym-weights.png" alt="EverSTRONG semi-private training session" loading="lazy"></div></div>
       <div class="program-body">
         <h3 class="program-title">Ever<span class="accent">STRONG</span></h3>
         <p class="program-copy">A complete longevity system for adults who want strength that ages as well as they do. Semi-private training, expert seminars, and a community that sticks.</p>
@@ -102,7 +106,7 @@
       </div>
     </article>
     <article class="program-card reveal" style="--i:1">
-      <div class="program-media"><img src="assets/gym-treadmills.png" alt="TeamSTRONG high-energy conditioning class" loading="lazy"></div>
+      <div class="program-media"><div class="plx" data-plx="16"><img src="assets/gym-treadmills.png" alt="TeamSTRONG high-energy conditioning class" loading="lazy"></div></div>
       <div class="program-body">
         <h3 class="program-title">Team<span class="accent">STRONG</span></h3>
         <p class="program-copy">High-energy functional conditioning for every age. Every ability. Every body. HIIT circuits that are scalable, powerful, and better together.</p>
@@ -114,6 +118,7 @@
         <a href="#quiz" class="arrow-link">Is it for me? <span class="arrow">→</span></a>
       </div>
     </article>
+  </div>
   </div>
 </section>
 
@@ -235,7 +240,7 @@
     </div>
   </div>
   <div id="bookDone" class="confirm-panel" hidden>
-    <p class="confirm-star" aria-hidden="true">✦</p>
+    <p class="confirm-star" aria-hidden="true"><span class="spark s1">✦</span><span class="spark s2">✦</span><span class="spark s3">✦</span></p>
     <h3 class="confirm-title" id="confirmTitle"></h3>
     <p class="confirm-body" id="confirmBody"></p>
     <button id="bkAnother" class="btn btn-ghost">Book another</button>
@@ -278,6 +283,16 @@
         <figcaption>EverSTRONG member (placeholder)</figcaption>
       </figure>
     </div>
+  </div>
+</section>
+
+<!-- CTA BAND -->
+<section class="cta-band bg-word-host">
+  <div class="bg-word cta-word" data-plx="-36" aria-hidden="true">TRAIN FOR LIFE</div>
+  <div class="container cta-inner">
+    <h2 class="cta-title reveal-lines">Ready to get <span class="serif-accent">stronger?</span></h2>
+    <p class="cta-sub reveal">Your first discovery call is free. Twenty minutes to find your fit — no pressure, no payment.</p>
+    <div class="reveal" style="--i:1"><a href="#book" class="btn btn-primary btn-lg magnetic">Book a Discovery Call</a></div>
   </div>
 </section>
 

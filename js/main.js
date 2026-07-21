@@ -14,13 +14,21 @@
   var navToggle = $('#navToggle');
   var navLinks = $('#navLinks');
   var progressBar = $('.scroll-progress');
+  var lastY = window.scrollY;
 
   function onScroll() {
-    nav.classList.toggle('scrolled', window.scrollY > 10);
+    var y = window.scrollY;
+    nav.classList.toggle('scrolled', y > 10);
+    // hide the nav scrolling down, bring it back scrolling up
+    if (!navLinks.classList.contains('open')) {
+      if (y > 320 && y - lastY > 4) nav.classList.add('hidden');
+      else if (y - lastY < -4 || y <= 320) nav.classList.remove('hidden');
+    }
+    lastY = y;
     if (progressBar) {
       var doc = document.documentElement;
       var max = doc.scrollHeight - window.innerHeight;
-      progressBar.style.transform = 'scaleX(' + (max > 0 ? window.scrollY / max : 0) + ')';
+      progressBar.style.transform = 'scaleX(' + (max > 0 ? y / max : 0) + ')';
     }
   }
   window.addEventListener('scroll', onScroll, { passive: true });
@@ -52,6 +60,46 @@
     });
   }
 
+  /* ============ kinetic headings: per-word masks ============ */
+
+  // Split .reveal-lines headings into word masks so each word rises on
+  // its own beat; text nodes only, so serif accent spans keep their style.
+  function splitWords(el) {
+    var wordIndex = 0;
+    function walk(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          var parts = child.textContent.split(/(\s+)/);
+          var frag = document.createDocumentFragment();
+          parts.forEach(function (part) {
+            if (!part) return;
+            if (/^\s+$/.test(part)) {
+              frag.appendChild(document.createTextNode(part));
+            } else {
+              var w = document.createElement('span');
+              w.className = 'w';
+              var wi = document.createElement('span');
+              wi.className = 'wi';
+              wi.style.setProperty('--wi', wordIndex++);
+              wi.textContent = part;
+              w.appendChild(wi);
+              frag.appendChild(w);
+            }
+          });
+          node.replaceChild(frag, child);
+        } else if (child.nodeType === Node.ELEMENT_NODE) {
+          walk(child);
+        }
+      });
+    }
+    walk(el);
+    el.classList.add('split');
+  }
+
+  if (!reducedMotion) {
+    document.querySelectorAll('.reveal-lines').forEach(splitWords);
+  }
+
   /* ============ scroll reveals ============ */
 
   var revealEls = document.querySelectorAll('.reveal, .reveal-lines');
@@ -69,22 +117,63 @@
     revealEls.forEach(function (el) { revealObserver.observe(el); });
   }
 
-  /* ============ hero parallax ============ */
+  /* ============ scroll-linked motion (hero + decorative parallax) ============ */
 
   var heroImg = $('#heroImg');
   var hero = $('.hero');
-  if (heroImg && !reducedMotion) {
+  var heroContent = $('.hero-content');
+  var scrollCue = $('.hero-scrollcue');
+  var plxEls = Array.prototype.slice.call(document.querySelectorAll('[data-plx]'));
+
+  if (!reducedMotion) {
     var ticking = false;
+    var applyMotion = function () {
+      var y = window.scrollY;
+      var vh = window.innerHeight;
+      var h = hero.offsetHeight;
+
+      if (y < h) {
+        heroImg.style.transform = 'translateY(' + (y * 0.25) + 'px)';
+        // hero copy drifts and fades as it scrolls away
+        heroContent.style.opacity = Math.max(0, 1 - y / (h * 0.75));
+        heroContent.style.transform = 'translateY(' + (y * 0.16) + 'px)';
+      }
+      if (scrollCue) scrollCue.style.opacity = Math.max(0, 1 - y / 240);
+
+      // decorative layers only (giant words, card imagery) — never body copy
+      plxEls.forEach(function (el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.bottom < 0 || rect.top > vh) return;
+        var progress = (rect.top + rect.height / 2 - vh / 2) / vh;
+        el.style.transform = 'translateY(' + (progress * parseFloat(el.dataset.plx)) + 'px)';
+      });
+      ticking = false;
+    };
     window.addEventListener('scroll', function () {
       if (ticking) return;
       ticking = true;
-      requestAnimationFrame(function () {
-        var h = hero.offsetHeight;
-        var y = window.scrollY;
-        if (y < h) heroImg.style.transform = 'translateY(' + (y * 0.25) + 'px)';
-        ticking = false;
-      });
+      requestAnimationFrame(applyMotion);
     }, { passive: true });
+    applyMotion();
+  }
+
+  /* ============ magnetic CTAs (desktop pointers only) ============ */
+
+  if (!reducedMotion && window.matchMedia('(pointer: fine)').matches) {
+    document.querySelectorAll('.magnetic').forEach(function (el) {
+      el.addEventListener('mousemove', function (e) {
+        var r = el.getBoundingClientRect();
+        // clamp the pull so the button never leaves its hit area
+        var dx = (e.clientX - r.left - r.width / 2) * 0.25;
+        var dy = (e.clientY - r.top - r.height / 2) * 0.35;
+        el.style.transition = 'transform 0.15s ease-out';
+        el.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+      });
+      el.addEventListener('mouseleave', function () {
+        el.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+        el.style.transform = 'translate(0, 0)';
+      });
+    });
   }
 
   /* ============ shared state ============ */
@@ -313,7 +402,7 @@
       row.innerHTML =
         '<div class="event-date"><p class="event-day"></p><p class="event-mon"></p></div>' +
         '<div class="event-info"><p class="event-title"></p><p class="event-meta"></p></div>' +
-        '<a href="#book" class="event-cta">Save spot →</a>';
+        '<a href="#book" class="event-cta">Save spot <span class="arrow-glyph">→</span></a>';
       row.querySelector('.event-day').textContent = String(e.d.getDate());
       row.querySelector('.event-mon').textContent = MON[e.d.getMonth()].toUpperCase();
       row.querySelector('.event-title').textContent = e.title;
@@ -470,4 +559,6 @@
   renderCalendar();
   renderEvents();
   renderBooking();
+
+  console.log('%cBe well. Stay committed. Train for life. ✦', 'color:#A855F7;font-size:14px;letter-spacing:2px');
 })();
