@@ -2,11 +2,9 @@
 
 Marketing homepage for **The Strong Academy** (thestrongacademy.com), a functional-conditioning / longevity coaching business in the DMV (Arlington, VA) founded by Venus Davis.
 
-Built from the Claude Design handoff (`design_handoff_strong_academy_homepage`) as a zero-dependency static site — no build step, deployable to any static host (GitHub Pages, Netlify, Vercel, S3).
+Zero-dependency static site — no build step, deployable to any static host (GitHub Pages, Netlify, Vercel, S3).
 
 ## Run it
-
-Open `index.html` directly, or serve the folder:
 
 ```bash
 python3 -m http.server 8000
@@ -17,25 +15,94 @@ python3 -m http.server 8000
 
 | Path | What it is |
 |---|---|
-| `index.html` | The full single-page site (nav, hero, marquee, pillars, programs, quiz, events calendar, pricing, booking flow, about, footer) |
-| `css/styles.css` | Design tokens from the handoff + the motion system |
-| `js/main.js` | Quiz funnel, events calendar, booking flow, newsletter, scroll-reveal / parallax controllers |
-| `assets/` | Placeholder photography (crops from client flyers — to be replaced with real class photos) |
+| `index.html` | The full single-page site |
+| `css/styles.css` | Brand tokens + motion system |
+| `js/main.js` | Integration config, quiz, calendar, scheduling, newsletter, motion controllers |
+| `assets/` | Photography (see *Pending assets*) |
+
+---
+
+## ⚙️ Going live — paste these three things into `js/main.js`
+
+Everything is scaffolded and degrades gracefully while these are empty. All three
+live in the clearly-marked **INTEGRATION CONFIG** block at the top of the file.
+
+### 1. Calendly (`CALENDLY`)
+One scheduling link per service:
+
+```js
+var CALENDLY = {
+  discovery: 'https://calendly.com/…/discovery-call',
+  single:    'https://calendly.com/…/1-1-session',
+  team:      'https://calendly.com/…/teamstrong-class',
+  workforce: 'https://calendly.com/…/workforce-consult'
+};
+```
+
+The embedded widget is auto-branded to the site palette (black background, blush
+text, Vurple accents) via Calendly's own URL parameters.
+
+**Google Calendar sync** (`Iamcoachve@gmail.com`, `Hello@thestrongacademy.com`) is
+configured **inside Calendly**, under *Account → Calendar Connections* — connect
+both accounts there and availability flows through automatically. No code change.
+
+### 2. Eventbrite (`EVENTBRITE`)
+```js
+var EVENTBRITE = {
+  organizer: 'https://www.eventbrite.com/o/…',
+  events: { 'Strong Camp L1': 'https://www.eventbrite.com/e/…' }
+};
+```
+Until `organizer` is set, the seeded schedule in `eventList()` is displayed.
+
+### 3. Package checkout (`PACKAGES`)
+Add a Stripe / Square / Calendly paid-event link per package. While
+`checkoutUrl` is empty the button routes to the scheduler instead of a checkout.
+
+---
+
+## Pending assets
+
+- **EverSTRONG + TeamSTRONG photography** — the two current images are flyer crops
+  and are marked `TODO(client)` in `index.html`. Workforce Strong has a branded
+  placeholder tile awaiting its first photo.
+- **Venus Davis headshot** — placeholder tile in the About section.
+- **Testimonials** — the three quotes are placeholders; real ones to come from the
+  previous site.
+- **Image optimization** — current PNGs total ~2.7 MB. When the new photography
+  arrives, export as WebP at 2× display size; `width`/`height` are already set on
+  every `<img>` to prevent layout shift.
+
+## Brand tokens
+
+| Token | Hex | Role |
+|---|---|---|
+| Vurple | `#8400C8` | **Fills only** — buttons, marquee, selected states |
+| Blush | `#EFE7E2` | Primary text + warm accent (serif italics) |
+| Light Gray | `#B7B6BA` | Muted body copy, eyebrows |
+| Mid Gray | `#616161` | **Borders/dividers only** |
+| Dark Gray | `#222223` | Card + tinted-section surfaces |
+| Black | `#000000` | Page background |
+
+> **Accessibility note:** Vurple on black is 2.82:1 and Mid Gray on black is 3.39:1 —
+> both below the 4.5:1 WCAG AA minimum. That's why Vurple is reserved for fills
+> (white on Vurple is 7.46:1) and Blush carries the accent-text role (17.2:1).
+> Don't move purple onto small text without adding a lighter tint.
+
+**Type:** Bebas Neue (display) · Cormorant Garamond italic (serif accent) · DM Sans (body).
+Bebas Neue ships a single weight, so heading hierarchy comes from size, tracking
+and color — never `font-weight`.
 
 ## Motion system
 
-Animation follows a "motion conveys state" budget (reduced-motion users get a fully static page via `prefers-reduced-motion`):
+All motion is disabled under `prefers-reduced-motion`, with a `noscript` fallback
+so content is never invisible without JS.
 
-- **Hero entrance** — choreographed masked line-rise on the H1, staggered rise for eyebrow/subhead/CTAs, slow 1.08→1 zoom on the photo, scroll-linked parallax drift, and a fade-away of the hero copy as it scrolls out.
-- **Kinetic headings** — section H2s split into per-word masks at runtime; each word rises on its own beat (55 ms stagger) when the heading enters the viewport.
-- **Grids** — staggered rise reveals (`--i` custom property, 90 ms per item, once-only, unobserved after firing).
-- **Decorative parallax** — giant outlined background words (programs, CTA band) and program-card imagery drift at different scroll speeds; decorative layers only, never body copy.
-- **Micro-interactions** — magnetic primary CTAs (desktop pointers, pull clamped so the button never leaves its hit area), duotone→color image hover-zoom, card lift + border glow, arrow-link slides, button press states, input focus rings, error shake, staggered ✦ sparkle pop on booking confirmation.
-- **Ambient** — tagline marquee (pauses on hover), scroll progress bar, scroll cue, active-section nav highlight, nav hides on scroll-down and returns on scroll-up, film-grain overlay, console easter egg.
+- **Hero** — masked line-rise choreography, 1.08→1 photo zoom, scroll parallax, copy fades out on scroll.
+- **Kinetic headings** — section H2s split into per-word masks at runtime, 55 ms stagger.
+- **Decorative parallax** — giant outlined background words and card imagery drift at differing speeds. Decorative layers only, never body copy.
+- **Micro-interactions** — magnetic primary CTAs (desktop pointers, clamped pull), duotone→color image hover, card lift, arrow slides, focus rings.
+- **Ambient** — marquee (pauses on hover), scroll progress bar, nav hides down / returns up, film grain, active-section nav highlight.
 
-## Production TODOs (from the handoff)
-
-- Booking + newsletter are front-end prototypes — wire to Calendly/Cal.com or a bookings API and an email marketing provider.
-- Events are placeholder data generated relative to today — move to a CMS or booking API.
-- Replace flyer-crop photography, add the real logo asset and Venus's headshot.
-- Social URLs and phone number are placeholders.
+Buttons animate an inner `.btn-label` rather than the button element itself, so a
+magnetic inline transform can never clobber hover-lift or press feedback.

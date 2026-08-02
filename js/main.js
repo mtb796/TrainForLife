@@ -1,9 +1,41 @@
 /* The Strong Academy — interactions
-   Quiz funnel, events calendar, booking flow, newsletter (all prototype-only;
-   wire booking + newsletter to real services in production), plus the
-   scroll-reveal / parallax motion system. */
+   Quiz funnel, two-month events calendar, Calendly scheduling, packages,
+   newsletter, plus the scroll-reveal / parallax motion system. */
 (function () {
   'use strict';
+
+  /* ============================================================
+     INTEGRATION CONFIG — paste live values here to go live.
+     Everything below degrades gracefully while these are empty.
+     ============================================================ */
+
+  // 1. CALENDLY — paste each service's scheduling link.
+  //    Google Calendar sync (Iamcoachve@gmail.com, Hello@thestrongacademy.com)
+  //    is connected inside Calendly's own Calendar Connections settings —
+  //    no code change needed here once those accounts are linked.
+  var CALENDLY = {
+    discovery: '',  // e.g. 'https://calendly.com/thestrongacademy/discovery-call'
+    single: '',     // e.g. 'https://calendly.com/thestrongacademy/1-1-session'
+    team: '',       // e.g. 'https://calendly.com/thestrongacademy/teamstrong-class'
+    workforce: ''   // e.g. 'https://calendly.com/thestrongacademy/workforce-consult'
+  };
+
+  // 2. EVENTBRITE — organizer page plus per-event ticket URLs.
+  //    While `organizer` is empty the seeded schedule below is displayed.
+  var EVENTBRITE = {
+    organizer: '',  // e.g. 'https://www.eventbrite.com/o/the-strong-academy-XXXXXXXX'
+    events: {}      // e.g. { 'Strong Camp L1': 'https://www.eventbrite.com/e/XXXXXXXX' }
+  };
+
+  // 3. PACKAGE CHECKOUT — Stripe/Square/Calendly paid-event links.
+  //    Empty values send the visitor to the scheduler instead.
+  var PACKAGES = {
+    single:     { name: 'Single Session',        svc: 'single', checkoutUrl: '' },
+    fourpack:   { name: 'Strong Start · 4-Pack', svc: 'single', checkoutUrl: '' },
+    twelvepack: { name: 'The Commitment · 12-Pack', svc: 'single', checkoutUrl: '' }
+  };
+
+  /* ============================================================ */
 
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
   var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -19,15 +51,13 @@
   function onScroll() {
     var y = window.scrollY;
     nav.classList.toggle('scrolled', y > 10);
-    // hide the nav scrolling down, bring it back scrolling up
     if (!navLinks.classList.contains('open')) {
       if (y > 320 && y - lastY > 4) nav.classList.add('hidden');
       else if (y - lastY < -4 || y <= 320) nav.classList.remove('hidden');
     }
     lastY = y;
     if (progressBar) {
-      var doc = document.documentElement;
-      var max = doc.scrollHeight - window.innerHeight;
+      var max = document.documentElement.scrollHeight - window.innerHeight;
       progressBar.style.transform = 'scaleX(' + (max > 0 ? y / max : 0) + ')';
     }
   }
@@ -45,8 +75,6 @@
     }
   });
 
-  // highlight the nav link of the section in view
-  var sectionIds = ['programs', 'events', 'pricing', 'about'];
   if ('IntersectionObserver' in window) {
     var navObserver = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
@@ -54,7 +82,7 @@
         if (link) link.classList.toggle('active', entry.isIntersecting);
       });
     }, { rootMargin: '-40% 0px -55% 0px' });
-    sectionIds.forEach(function (id) {
+    ['programs', 'events', 'packages', 'about'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) navObserver.observe(el);
     });
@@ -62,16 +90,13 @@
 
   /* ============ kinetic headings: per-word masks ============ */
 
-  // Split .reveal-lines headings into word masks so each word rises on
-  // its own beat; text nodes only, so serif accent spans keep their style.
   function splitWords(el) {
     var wordIndex = 0;
-    function walk(node) {
+    (function walk(node) {
       Array.prototype.slice.call(node.childNodes).forEach(function (child) {
         if (child.nodeType === Node.TEXT_NODE) {
-          var parts = child.textContent.split(/(\s+)/);
           var frag = document.createDocumentFragment();
-          parts.forEach(function (part) {
+          child.textContent.split(/(\s+)/).forEach(function (part) {
             if (!part) return;
             if (/^\s+$/.test(part)) {
               frag.appendChild(document.createTextNode(part));
@@ -91,13 +116,14 @@
           walk(child);
         }
       });
-    }
-    walk(el);
+    })(el);
     el.classList.add('split');
   }
 
   if (!reducedMotion) {
-    document.querySelectorAll('.reveal-lines').forEach(splitWords);
+    try {
+      document.querySelectorAll('.reveal-lines').forEach(splitWords);
+    } catch (e) { /* headings stay in their unsplit fallback reveal */ }
   }
 
   /* ============ scroll reveals ============ */
@@ -117,7 +143,7 @@
     revealEls.forEach(function (el) { revealObserver.observe(el); });
   }
 
-  /* ============ scroll-linked motion (hero + decorative parallax) ============ */
+  /* ============ scroll-linked motion ============ */
 
   var heroImg = $('#heroImg');
   var hero = $('.hero');
@@ -131,16 +157,12 @@
       var y = window.scrollY;
       var vh = window.innerHeight;
       var h = hero.offsetHeight;
-
       if (y < h) {
         heroImg.style.transform = 'translateY(' + (y * 0.25) + 'px)';
-        // hero copy drifts and fades as it scrolls away
         heroContent.style.opacity = Math.max(0, 1 - y / (h * 0.75));
         heroContent.style.transform = 'translateY(' + (y * 0.16) + 'px)';
       }
       if (scrollCue) scrollCue.style.opacity = Math.max(0, 1 - y / 240);
-
-      // decorative layers only (giant words, card imagery) — never body copy
       plxEls.forEach(function (el) {
         var rect = el.getBoundingClientRect();
         if (rect.bottom < 0 || rect.top > vh) return;
@@ -163,7 +185,6 @@
     document.querySelectorAll('.magnetic').forEach(function (el) {
       el.addEventListener('mousemove', function (e) {
         var r = el.getBoundingClientRect();
-        // clamp the pull so the button never leaves its hit area
         var dx = (e.clientX - r.left - r.width / 2) * 0.25;
         var dy = (e.clientY - r.top - r.height / 2) * 0.35;
         el.style.transition = 'transform 0.15s ease-out';
@@ -178,58 +199,64 @@
 
   /* ============ shared state ============ */
 
-  var state = {
-    quizStep: 1, quizGoal: null, quizResult: null,
-    selDay: null,
-    svc: 'discovery', dayOff: 1, slot: null,
-    booked: false
-  };
+  var state = { quizStep: 1, quizGoal: null, quizResult: null, selKey: null, monthOffset: 0, svc: 'discovery' };
 
   var today = new Date(); today.setHours(0, 0, 0, 0);
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var MON_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   var SERVICES = [
-    { id: 'discovery', name: 'Discovery Call', price: 'Free', meta: '20 min · phone or video · find your fit' },
-    { id: 'single', name: '1:1 Coaching Session', price: '$165', meta: '60 min · movement assessment included' },
-    { id: 'team', name: 'TeamSTRONG Class', price: 'Drop-in', meta: '45 min · Long Bridge Park · all levels' },
-    { id: 'consult', name: 'Corporate Consult', price: 'Free', meta: '30 min · workshops, pop-ups & proposals' }
+    { id: 'discovery', name: 'Discovery Call', dur: '15 min', meta: 'Phone or video · find your fit' },
+    { id: 'single', name: '1:1 Coaching Session', dur: '60 min', meta: 'Movement assessment included' },
+    { id: 'team', name: 'TeamSTRONG Class', dur: '45 min', meta: 'Long Bridge Park · all levels' },
+    { id: 'workforce', name: 'Workforce Strong Consult', dur: '30 min', meta: 'Workshops, pop-ups & proposals' }
   ];
 
-  function slotTimes(svcId, date) {
-    var dow = date.getDay();
-    if (svcId === 'team') return dow === 6 ? ['9:00 AM'] : (dow === 2 || dow === 4 ? ['6:00 PM'] : []);
-    if (svcId === 'single') return ['7:00 AM', '9:00 AM', '12:00 PM', '4:30 PM', '6:00 PM'];
-    return ['9:30 AM', '11:00 AM', '1:00 PM', '3:30 PM', '5:00 PM'];
-  }
+  /* ============ events data ============
+     Seeded schedule shown until EVENTBRITE.organizer is set.
+     `soldOut: true` renders the SOLD OUT tag + Notify Me control. */
 
-  // placeholder events relative to today; replace with CMS / booking API data
   function eventList() {
-    function mk(off, title, meta) {
+    function mk(off, title, meta, soldOut) {
       var d = new Date(today); d.setDate(d.getDate() + off);
-      return { d: d, title: title, meta: meta };
+      return { d: d, title: title, meta: meta, soldOut: !!soldOut };
     }
     return [
-      mk(2, 'TeamSTRONG Outdoor Circuit', '6:00 PM · Long Bridge Park, Arlington'),
-      mk(4, 'TeamSTRONG Outdoor Circuit', '6:00 PM · Long Bridge Park, Arlington'),
-      mk(5, 'Expert Seminar: Heart Health After 40', '10:00 AM · with guest cardiologist (placeholder)'),
-      mk(7, 'EverSTRONG Community Social Hour', '5:30 PM · post-session meetup'),
-      mk(11, 'Pop-Up: Free Mobility Screening', '9:00 AM · Long Bridge Park'),
-      mk(14, 'EverSTRONG Pilot — New Cohort Kickoff', '9:00 AM · limited to 12 spots'),
-      mk(19, 'Lunch & Learn: The Longevity Blueprint', '12:00 PM · corporate host (placeholder)')
+      mk(2,  'TeamSTRONG Outdoor Circuit', '6:00 PM · Long Bridge Park, Arlington', false),
+      mk(4,  'EverSTRONG Class', '9:00 AM · semi-private 5:1', true),
+      mk(5,  'Expert Seminar: Heart Health After 40', '10:00 AM · with guest cardiologist', false),
+      mk(7,  'Strong Camp L1', '8:00 AM · six-week foundations camp', true),
+      mk(9,  'EverSTRONG Class', '9:00 AM · semi-private 5:1', true),
+      mk(11, 'TeamSTRONG Outdoor Circuit', '6:00 PM · Long Bridge Park, Arlington', false),
+      mk(14, 'Strong Camp L1', '8:00 AM · six-week foundations camp', true),
+      mk(16, 'EverSTRONG Class', '9:00 AM · semi-private 5:1', true),
+      mk(19, 'Lunch & Learn: The Longevity Blueprint', '12:00 PM · corporate host', false),
+      mk(21, 'Strong Camp L1', '8:00 AM · six-week foundations camp', true),
+      mk(23, 'EverSTRONG Class', '9:00 AM · semi-private 5:1', true),
+      mk(26, 'TeamSTRONG Outdoor Circuit', '6:00 PM · Long Bridge Park, Arlington', false),
+      mk(30, 'EverSTRONG Class', '9:00 AM · semi-private 5:1', true),
+      mk(35, 'Pop-Up: Free Mobility Screening', '9:00 AM · Long Bridge Park', false),
+      mk(38, 'Strong Camp L1', '8:00 AM · six-week foundations camp', true),
+      mk(44, 'EverSTRONG Class', '9:00 AM · semi-private 5:1', true)
     ];
   }
+
+  var events = eventList();
+  var evByKey = {};
+  function dayKey(d) { return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); }
+  events.forEach(function (e) { (evByKey[dayKey(e.d)] = evByKey[dayKey(e.d)] || []).push(e); });
 
   /* ============ quiz funnel ============ */
 
   var QUIZ_RESULTS = {
-    ever: { name: 'EverSTRONG', desc: 'A complete longevity system: semi-private strength training (4:1), expert-led health seminars, and a community that sticks. Strength that ages as well as you do.' },
-    team: { name: 'TeamSTRONG', desc: 'High-energy HIIT + functional conditioning, scalable for every level. The group pushes you further than you would go alone.' },
+    ever: { name: 'EverSTRONG', desc: 'A complete longevity system: semi-private strength training (5:1), expert-led health seminars, and a community that sticks. Strength that ages as well as you do.' },
+    team: { name: 'TeamSTRONG', desc: 'High Intentional HIIT + functional conditioning, scalable for every level. The group pushes you further than you would go alone.' },
     solo: { name: '1:1 Coaching', desc: 'Personalized longevity coaching with Venus Davis — baseline assessment, custom programming, and quarterly reassessments that prove your progress.' },
-    corp: { name: 'Corporate & Community', desc: 'Turnkey wellness for your organization: workshops, pop-up series, and group fitness experiences delivered at your location or ours.' }
+    corp: { name: 'Workforce Strong', desc: 'Turnkey wellness for your organization: workshops, pop-up series, and group fitness experiences delivered at your location or ours.' }
   };
   var GOALS = [
     { label: 'Age strong & stay capable', v: 'ever' },
-    { label: 'High-energy conditioning', v: 'team' },
+    { label: 'High Intentional conditioning', v: 'team' },
     { label: 'A personal transformation', v: 'solo' },
     { label: 'Wellness for my team', v: 'corp' }
   ];
@@ -239,7 +266,7 @@
     { label: 'One-on-one attention', v: 'solo' },
     { label: 'At my workplace', v: 'corp' }
   ];
-  var SVC_FOR_RESULT = { ever: 'discovery', team: 'team', solo: 'single', corp: 'consult' };
+  var SVC_FOR_RESULT = { ever: 'discovery', team: 'team', solo: 'single', corp: 'workforce' };
 
   function resolveQuiz(goal, style) {
     if (goal === 'corp' || style === 'corp') return 'corp';
@@ -258,7 +285,7 @@
     return b;
   }
 
-  function renderQuiz() {
+  function renderQuiz(focusFirst) {
     [1, 2, 3].forEach(function (n) {
       $('#quizBar' + n).classList.toggle('on', state.quizStep >= n);
     });
@@ -274,7 +301,7 @@
       grid1.className = 'quiz-options';
       GOALS.forEach(function (g) {
         grid1.appendChild(optionButton(g.label, function () {
-          state.quizGoal = g.v; state.quizStep = 2; renderQuiz();
+          state.quizGoal = g.v; state.quizStep = 2; renderQuiz(true);
         }));
       });
       step.appendChild(q1); step.appendChild(grid1);
@@ -287,14 +314,14 @@
       STYLES.forEach(function (s) {
         grid2.appendChild(optionButton(s.label, function () {
           state.quizResult = resolveQuiz(state.quizGoal, s.v);
-          state.quizStep = 3; renderQuiz();
+          state.quizStep = 3; renderQuiz(true);
         }));
       });
       var back = document.createElement('button');
       back.type = 'button';
       back.className = 'quiz-back';
       back.textContent = '← Back';
-      back.addEventListener('click', function () { state.quizStep = 1; renderQuiz(); });
+      back.addEventListener('click', function () { state.quizStep = 1; renderQuiz(true); });
       step.appendChild(q2); step.appendChild(grid2); step.appendChild(back);
     } else {
       var r = QUIZ_RESULTS[state.quizResult];
@@ -305,64 +332,79 @@
         '<h3 class="quiz-result-name"></h3>' +
         '<p class="quiz-result-desc"></p>' +
         '<div class="quiz-result-ctas">' +
-        '<a href="#book" class="btn btn-primary quiz-book">Book a Discovery Call</a>' +
-        '<button type="button" class="btn btn-ghost quiz-reset">Start over</button>' +
+        '<a href="#book" class="btn btn-primary quiz-book"><span class="btn-label">Book a Discovery Call</span></a>' +
+        '<button type="button" class="btn btn-ghost quiz-reset"><span class="btn-label">Start over</span></button>' +
         '</div>';
       card.querySelector('.quiz-result-name').textContent = r.name;
       card.querySelector('.quiz-result-desc').textContent = r.desc;
       card.querySelector('.quiz-book').addEventListener('click', function () {
-        state.svc = SVC_FOR_RESULT[state.quizResult] || 'discovery';
-        state.slot = null;
-        renderBooking();
+        selectService(SVC_FOR_RESULT[state.quizResult] || 'discovery');
       });
       card.querySelector('.quiz-reset').addEventListener('click', function () {
-        state.quizStep = 1; state.quizGoal = null; state.quizResult = null; renderQuiz();
+        state.quizStep = 1; state.quizGoal = null; state.quizResult = null; renderQuiz(true);
       });
       step.appendChild(card);
     }
     quizBody.appendChild(step);
+    // keep keyboard users anchored after the step swaps out
+    if (focusFirst) {
+      var first = step.querySelector('button, a');
+      if (first) first.focus({ preventScroll: true });
+    }
   }
 
-  /* ============ events calendar ============ */
+  /* ============ two-month calendar ============ */
 
-  var calGrid = $('#calGrid');
-  var calDow = $('#calDow');
+  var calMonths = $('#calMonths');
+  var calRange = $('#calRange');
   var eventsListEl = $('#eventsList');
   var clearDayBtn = $('#clearDay');
-  var events = eventList();
-  var evByDay = {};
-  events.forEach(function (e) {
-    if (e.d.getMonth() === today.getMonth() && e.d.getFullYear() === today.getFullYear()) {
-      (evByDay[e.d.getDate()] = evByDay[e.d.getDate()] || []).push(e);
-    }
-  });
+  var MONTHS_SHOWN = 2;
 
-  $('#monthLabel').textContent = today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].forEach(function (d) {
-    var cell = document.createElement('div');
-    cell.textContent = d;
-    calDow.appendChild(cell);
-  });
+  function monthStart(offset) {
+    return new Date(today.getFullYear(), today.getMonth() + offset, 1);
+  }
 
-  function renderCalendar() {
-    calGrid.innerHTML = '';
-    var first = new Date(today.getFullYear(), today.getMonth(), 1);
-    var daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-    var i, d;
-    for (i = 0; i < first.getDay(); i++) {
+  function renderMonth(base) {
+    var wrap = document.createElement('div');
+    var title = document.createElement('p');
+    title.className = 'cal-month-title';
+    title.textContent = MON_FULL[base.getMonth()] + ' ' + base.getFullYear();
+    wrap.appendChild(title);
+
+    var dow = document.createElement('div');
+    dow.className = 'cal-dow';
+    ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(function (d, i) {
+      var c = document.createElement('div');
+      c.textContent = d;
+      c.setAttribute('aria-hidden', 'true');
+      dow.appendChild(c);
+    });
+    wrap.appendChild(dow);
+
+    var grid = document.createElement('div');
+    grid.className = 'cal-grid';
+    var daysInMonth = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
+    for (var i = 0; i < base.getDay(); i++) {
       var blank = document.createElement('div');
       blank.className = 'cal-cell blank';
-      calGrid.appendChild(blank);
+      grid.appendChild(blank);
     }
-    for (d = 1; d <= daysInMonth; d++) {
+    for (var d = 1; d <= daysInMonth; d++) {
       (function (day) {
-        var has = !!evByDay[day];
+        var date = new Date(base.getFullYear(), base.getMonth(), day);
+        var key = dayKey(date);
+        var dayEvents = evByKey[key] || [];
+        var has = dayEvents.length > 0;
         var cell = document.createElement(has ? 'button' : 'div');
-        if (has) cell.type = 'button';
         cell.className = 'cal-cell';
-        if (has) cell.classList.add('has-events');
-        if (day === today.getDate()) cell.classList.add('today');
-        if (state.selDay === day) cell.classList.add('selected');
+        if (has) {
+          cell.type = 'button';
+          cell.classList.add('has-events');
+          if (dayEvents.every(function (e) { return e.soldOut; })) cell.classList.add('sold-out');
+        }
+        if (date.getTime() === today.getTime()) cell.classList.add('today');
+        if (state.selKey === key) cell.classList.add('selected');
         var num = document.createElement('span');
         num.textContent = String(day);
         cell.appendChild(num);
@@ -370,85 +412,184 @@
           var dot = document.createElement('span');
           dot.className = 'cal-dot';
           cell.appendChild(dot);
-          cell.setAttribute('aria-label', MON[today.getMonth()] + ' ' + day + ' — view events');
-          cell.setAttribute('aria-pressed', String(state.selDay === day));
+          cell.setAttribute('aria-label',
+            MON_FULL[date.getMonth()] + ' ' + day + ' — ' + dayEvents.length + ' event' + (dayEvents.length > 1 ? 's' : ''));
+          cell.setAttribute('aria-pressed', String(state.selKey === key));
           cell.addEventListener('click', function () {
-            state.selDay = state.selDay === day ? null : day;
+            state.selKey = state.selKey === key ? null : key;
             renderCalendar();
             renderEvents();
           });
         }
-        calGrid.appendChild(cell);
+        grid.appendChild(cell);
       })(d);
     }
+    wrap.appendChild(grid);
+    return wrap;
+  }
+
+  function renderCalendar() {
+    calMonths.innerHTML = '';
+    for (var i = 0; i < MONTHS_SHOWN; i++) {
+      calMonths.appendChild(renderMonth(monthStart(state.monthOffset + i)));
+    }
+    var first = monthStart(state.monthOffset);
+    var last = monthStart(state.monthOffset + MONTHS_SHOWN - 1);
+    calRange.textContent = MON[first.getMonth()].toUpperCase() + ' – ' +
+      MON[last.getMonth()].toUpperCase() + ' ' + last.getFullYear();
+    $('#calPrev').disabled = state.monthOffset <= 0;
+  }
+
+  $('#calPrev').addEventListener('click', function () {
+    if (state.monthOffset > 0) { state.monthOffset--; state.selKey = null; renderCalendar(); renderEvents(); }
+  });
+  $('#calNext').addEventListener('click', function () {
+    state.monthOffset++; state.selKey = null; renderCalendar(); renderEvents();
+  });
+
+  function ticketUrl(ev) {
+    return EVENTBRITE.events[ev.title] || EVENTBRITE.organizer || '';
   }
 
   function renderEvents() {
     eventsListEl.innerHTML = '';
-    var shown = state.selDay
-      ? (evByDay[state.selDay] || [])
-      : events.filter(function (e) { return e.d >= today; }).slice(0, 4);
+    var windowStart = monthStart(state.monthOffset);
+    var windowEnd = new Date(monthStart(state.monthOffset + MONTHS_SHOWN).getTime() - 1);
+
+    var shown = state.selKey
+      ? (evByKey[state.selKey] || [])
+      : events.filter(function (e) {
+          return e.d >= (state.monthOffset === 0 ? today : windowStart) && e.d <= windowEnd;
+        }).slice(0, 5);
 
     if (!shown.length) {
       var empty = document.createElement('p');
       empty.className = 'events-empty';
-      empty.textContent = 'No events on this day.';
+      empty.textContent = state.selKey
+        ? 'No events on this day.'
+        : 'No events scheduled in this range — try the next month.';
       eventsListEl.appendChild(empty);
     }
+
     shown.forEach(function (e, i) {
       var row = document.createElement('div');
       row.className = 'event-row';
       row.style.setProperty('--i', i);
       row.innerHTML =
         '<div class="event-date"><p class="event-day"></p><p class="event-mon"></p></div>' +
-        '<div class="event-info"><p class="event-title"></p><p class="event-meta"></p></div>' +
-        '<a href="#book" class="event-cta">Save spot <span class="arrow-glyph">→</span></a>';
+        '<div class="event-info"><p class="event-title"></p><p class="event-meta"></p></div>';
       row.querySelector('.event-day').textContent = String(e.d.getDate());
       row.querySelector('.event-mon').textContent = MON[e.d.getMonth()].toUpperCase();
-      row.querySelector('.event-title').textContent = e.title;
+
+      var titleEl = row.querySelector('.event-title');
+      titleEl.appendChild(document.createTextNode(e.title));
+      if (e.soldOut) {
+        var tag = document.createElement('span');
+        tag.className = 'sold-out-tag';
+        tag.textContent = 'Sold out';
+        titleEl.appendChild(tag);
+      }
       row.querySelector('.event-meta').textContent =
         e.d.toLocaleDateString('en-US', { weekday: 'long' }) + ' · ' + e.meta;
+
+      if (e.soldOut) {
+        var notify = document.createElement('button');
+        notify.type = 'button';
+        notify.className = 'event-cta notify';
+        notify.innerHTML = 'Notify me <span class="arrow-glyph">→</span>';
+        notify.addEventListener('click', function () {
+          notify.classList.add('notified');
+          notify.classList.remove('notify');
+          notify.textContent = '✦ On the waitlist';
+          notify.disabled = true;
+          var news = document.getElementById('newsEmail');
+          if (news) news.focus({ preventScroll: false });
+        });
+        row.appendChild(notify);
+      } else {
+        var link = document.createElement('a');
+        link.className = 'event-cta';
+        link.href = ticketUrl(e) || '#book';
+        if (ticketUrl(e)) { link.target = '_blank'; link.rel = 'noopener'; }
+        link.innerHTML = 'Save spot <span class="arrow-glyph">→</span>';
+        row.appendChild(link);
+      }
       eventsListEl.appendChild(row);
     });
 
-    if (state.selDay) {
+    if (state.selKey) {
+      var parts = state.selKey.split('-');
       clearDayBtn.hidden = false;
-      clearDayBtn.textContent = 'Showing ' + MON[today.getMonth()] + ' ' + state.selDay + ' — show all ✕';
+      clearDayBtn.textContent = 'Showing ' + MON[+parts[1]] + ' ' + parts[2] + ' — show all ✕';
     } else {
       clearDayBtn.hidden = true;
     }
   }
 
   clearDayBtn.addEventListener('click', function () {
-    state.selDay = null;
+    state.selKey = null;
     renderCalendar();
     renderEvents();
   });
 
-  /* ============ booking flow ============ */
+  /* ============ booking — Calendly ============ */
 
   var svcList = $('#svcList');
-  var dayGrid = $('#dayGrid');
-  var slotWrap = $('#slotWrap');
-  var bkError = $('#bkError');
+  var scheduler = $('#scheduler');
+  var calendlyLoading = null;
 
-  function selectedDate() {
-    var d = new Date(today); d.setDate(d.getDate() + state.dayOff);
-    return d;
+  function loadCalendly() {
+    if (window.Calendly) return Promise.resolve();
+    if (calendlyLoading) return calendlyLoading;
+    calendlyLoading = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = 'https://assets.calendly.com/assets/external/widget.js';
+      s.async = true;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+    return calendlyLoading;
   }
 
-  function svcName() {
-    var s = SERVICES.find(function (v) { return v.id === state.svc; });
-    return s ? s.name : '';
+  // brand the embedded widget to match the site
+  function brandedUrl(url) {
+    return url + (url.indexOf('?') > -1 ? '&' : '?') +
+      'background_color=000000&text_color=EFE7E2&primary_color=8400C8';
   }
 
-  function bookSummary() {
-    var dateLabel = selectedDate().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-    return svcName() + ' · ' + dateLabel + (state.slot ? ' · ' + state.slot : ' · pick a time');
+  function renderScheduler() {
+    var url = CALENDLY[state.svc];
+    scheduler.innerHTML = '';
+
+    if (!url) {
+      var svc = SERVICES.find(function (s) { return s.id === state.svc; });
+      var ph = document.createElement('div');
+      ph.className = 'scheduler-placeholder';
+      ph.innerHTML =
+        '<p class="sp-mark" aria-hidden="true">✦</p>' +
+        '<h3></h3>' +
+        '<p></p>' +
+        '<p><code>CALENDLY.' + state.svc + '</code></p>';
+      ph.querySelector('h3').textContent = svc.name;
+      ph.querySelector('p:nth-of-type(2)').textContent =
+        'Scheduling for this service goes live as soon as its Calendly link is added in js/main.js.';
+      scheduler.appendChild(ph);
+      return;
+    }
+
+    var host = document.createElement('div');
+    host.className = 'calendly-inline-widget';
+    scheduler.appendChild(host);
+    loadCalendly().then(function () {
+      window.Calendly.initInlineWidget({ url: brandedUrl(url), parentElement: host });
+    }).catch(function () {
+      scheduler.innerHTML = '<div class="scheduler-placeholder"><p>Scheduling is temporarily unavailable. ' +
+        'Email <a href="mailto:hello@thestrongacademy.com">hello@thestrongacademy.com</a> and we\'ll get you booked.</p></div>';
+    });
   }
 
-  function renderBooking() {
-    // services
+  function renderServices() {
     svcList.innerHTML = '';
     SERVICES.forEach(function (s) {
       var b = document.createElement('button');
@@ -457,108 +598,76 @@
       b.setAttribute('aria-pressed', String(state.svc === s.id));
       b.innerHTML = '<span class="svc-top"><span class="svc-name"></span><span class="svc-price"></span></span><span class="svc-meta"></span>';
       b.querySelector('.svc-name').textContent = s.name;
-      b.querySelector('.svc-price').textContent = s.price;
+      b.querySelector('.svc-price').textContent = s.dur;
       b.querySelector('.svc-meta').textContent = s.meta;
-      b.addEventListener('click', function () {
-        state.svc = s.id; state.slot = null; renderBooking();
-      });
+      b.addEventListener('click', function () { selectService(s.id); });
       svcList.appendChild(b);
     });
-
-    // days
-    dayGrid.innerHTML = '';
-    for (var i = 1; i <= 10; i++) {
-      (function (off) {
-        var d = new Date(today); d.setDate(d.getDate() + off);
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'day-cell' + (state.dayOff === off ? ' selected' : '');
-        b.setAttribute('aria-pressed', String(state.dayOff === off));
-        b.innerHTML = '<span class="day-dow"></span><span class="day-num"></span>';
-        b.querySelector('.day-dow').textContent = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-        b.querySelector('.day-num').textContent = String(d.getDate());
-        b.addEventListener('click', function () {
-          state.dayOff = off; state.slot = null; renderBooking();
-        });
-        dayGrid.appendChild(b);
-      })(i);
-    }
-
-    // time slots
-    slotWrap.innerHTML = '';
-    var times = slotTimes(state.svc, selectedDate());
-    if (times.length) {
-      var grid = document.createElement('div');
-      grid.className = 'slot-grid';
-      times.forEach(function (t, idx) {
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'slot-cell' + (state.slot === t ? ' selected' : '');
-        b.style.setProperty('--i', idx);
-        b.setAttribute('aria-pressed', String(state.slot === t));
-        b.textContent = t;
-        b.addEventListener('click', function () {
-          state.slot = t; renderBooking();
-        });
-        grid.appendChild(b);
-      });
-      slotWrap.appendChild(grid);
-    } else {
-      var msg = document.createElement('p');
-      msg.className = 'no-slots';
-      msg.textContent = 'No ' + svcName() + ' times this day — TeamSTRONG runs Tue & Thu 6:00 PM and Sat 9:00 AM. Pick another day.';
-      slotWrap.appendChild(msg);
-    }
-
-    $('#bookSummary').textContent = bookSummary();
   }
 
-  function showError(msg) {
-    bkError.textContent = msg;
-    bkError.hidden = false;
-    bkError.classList.remove('shake');
-    void bkError.offsetWidth; // restart the shake animation
-    bkError.classList.add('shake');
+  function selectService(id, scroll) {
+    state.svc = id;
+    renderServices();
+    renderScheduler();
+    if (scroll !== false) {
+      document.getElementById('book').scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
+    }
   }
 
-  $('#bkConfirm').addEventListener('click', function () {
-    var name = $('#bkName').value.trim();
-    var email = $('#bkEmail').value.trim();
-    if (!state.slot) return showError('Pick a time slot first.');
-    if (!name || !email) return showError('Name and email are required.');
-    bkError.hidden = true;
-    state.booked = true;
-    $('#bookGrid').hidden = true;
-    $('#confirmTitle').textContent = "You're on the books, " + name + '.';
-    $('#confirmBody').textContent = bookSummary() + '. A confirmation is headed to ' + email + '. Be well. Stay committed. Train for life.';
-    var done = $('#bookDone');
-    done.hidden = false;
-    done.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
+  // "Book another" inside Calendly's own flow returns to the scheduler
+  window.addEventListener('message', function (e) {
+    if (e.data && typeof e.data.event === 'string' && e.data.event === 'calendly.event_scheduled') {
+      var again = document.createElement('button');
+      again.type = 'button';
+      again.className = 'btn btn-ghost';
+      again.innerHTML = '<span class="btn-label">Book another</span>';
+      again.addEventListener('click', renderScheduler);
+      var bar = document.createElement('div');
+      bar.style.cssText = 'padding:16px;text-align:center';
+      bar.appendChild(again);
+      scheduler.appendChild(bar);
+    }
   });
 
-  $('#bkAnother').addEventListener('click', function () {
-    state.booked = false; state.slot = null;
-    $('#bookDone').hidden = true;
-    $('#bookGrid').hidden = false;
-    renderBooking();
+  /* ============ packages ============ */
+
+  document.querySelectorAll('[data-package]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pkg = PACKAGES[btn.dataset.package];
+      if (!pkg) return;
+      if (pkg.checkoutUrl) {
+        window.open(pkg.checkoutUrl, '_blank', 'noopener');
+        return;
+      }
+      // no checkout link yet — send them to the scheduler for that service
+      selectService(pkg.svc);
+    });
   });
 
   /* ============ newsletter ============ */
 
-  $('#newsForm').addEventListener('submit', function (e) {
+  var newsForm = $('#newsForm');
+  var newsError = $('#newsError');
+  newsForm.addEventListener('submit', function (e) {
     e.preventDefault();
     var email = $('#newsEmail').value.trim();
-    if (!email) return;
-    $('#newsForm').hidden = true;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      newsError.textContent = 'Enter a valid email address.';
+      newsError.hidden = false;
+      return;
+    }
+    newsError.hidden = true;
+    newsForm.hidden = true;
     $('#newsDone').hidden = false;
   });
 
   /* ============ init ============ */
 
-  renderQuiz();
+  renderQuiz(false);
   renderCalendar();
   renderEvents();
-  renderBooking();
+  renderServices();
+  renderScheduler();
 
-  console.log('%cBe well. Stay committed. Train for life. ✦', 'color:#A855F7;font-size:14px;letter-spacing:2px');
+  console.log('%cBe well. Stay committed. Train for life. ✦', 'color:#8400C8;font-size:14px;letter-spacing:2px');
 })();
