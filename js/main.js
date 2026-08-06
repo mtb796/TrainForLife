@@ -5,8 +5,14 @@
   'use strict';
 
   /* ============================================================
-     INTEGRATION CONFIG — paste live values here to go live.
-     Everything below degrades gracefully while these are empty.
+     CONFIG DEFAULTS
+
+     These are FALLBACKS ONLY. The live values come from
+     content/site.json, which is edited through /admin (or directly
+     on GitHub) — every save triggers a Vercel redeploy.
+
+     If that file is missing or unreadable, the site quietly falls
+     back to everything defined here, so it can never render blank.
      ============================================================ */
 
   // 1. CALENDLY — paste each service's scheduling link.
@@ -241,10 +247,17 @@
     ];
   }
 
-  var events = eventList();
+  var events = [];
   var evByKey = {};
   function dayKey(d) { return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); }
-  events.forEach(function (e) { (evByKey[dayKey(e.d)] = evByKey[dayKey(e.d)] || []).push(e); });
+
+  function indexEvents(list) {
+    events = list.slice().sort(function (a, b) { return a.d - b.d; });
+    evByKey = {};
+    events.forEach(function (e) {
+      (evByKey[dayKey(e.d)] = evByKey[dayKey(e.d)] || []).push(e);
+    });
+  }
 
   /* ============ quiz funnel ============ */
 
@@ -661,13 +674,78 @@
     $('#newsDone').hidden = false;
   });
 
-  /* ============ init ============ */
+  /* ============ testimonials ============ */
 
-  renderQuiz(false);
-  renderCalendar();
-  renderEvents();
-  renderServices();
-  renderScheduler();
+  // The three quotes in index.html are the no-JS fallback. They are only
+  // replaced when site.json actually supplies quotes, so a failed fetch
+  // leaves real content on the page rather than an empty grid.
+  function renderTestimonials(list) {
+    if (!list || !list.length) return;
+    var wrap = document.querySelector('.testimonials');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    list.forEach(function (t, i) {
+      var fig = document.createElement('figure');
+      fig.className = 'quote-card reveal in';
+      fig.style.setProperty('--i', i);
+      var q = document.createElement('p');
+      q.className = 'quote';
+      q.textContent = '“' + t.quote + '”';
+      var cap = document.createElement('figcaption');
+      cap.textContent = t.who;
+      fig.appendChild(q);
+      fig.appendChild(cap);
+      wrap.appendChild(fig);
+    });
+  }
 
-  console.log('%cBe well. Stay committed. Train for life. ✦', 'color:#8400C8;font-size:14px;letter-spacing:2px');
+  /* ============ content loading ============ */
+
+  function parseDate(s) {
+    // Parse as local midnight — `new Date("2026-08-04")` is UTC and can
+    // land on the previous day in western timezones.
+    var p = String(s).split('-');
+    return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
+
+  function applyContent(c) {
+    if (!c) return;
+    var i = c.integrations || {};
+    if (i.calendly) Object.keys(CALENDLY).forEach(function (k) {
+      if (typeof i.calendly[k] === 'string') CALENDLY[k] = i.calendly[k];
+    });
+    if (i.eventbrite) {
+      if (typeof i.eventbrite.organizer === 'string') EVENTBRITE.organizer = i.eventbrite.organizer;
+      if (i.eventbrite.events) EVENTBRITE.events = i.eventbrite.events;
+    }
+    if (i.packages) Object.keys(PACKAGES).forEach(function (k) {
+      if (typeof i.packages[k] === 'string') PACKAGES[k].checkoutUrl = i.packages[k];
+    });
+    if (Array.isArray(c.events) && c.events.length) {
+      indexEvents(c.events.map(function (e) {
+        return { d: parseDate(e.date), title: e.title, meta: e.meta, soldOut: !!e.soldOut };
+      }));
+    }
+    renderTestimonials(c.testimonials);
+  }
+
+  function boot(content) {
+    try { applyContent(content); } catch (err) { /* keep the built-in defaults */ }
+    if (!events.length) indexEvents(eventList());
+    renderQuiz(false);
+    renderCalendar();
+    renderEvents();
+    renderServices();
+    renderScheduler();
+    console.log('%cBe well. Stay committed. Train for life. ✦', 'color:#8400C8;font-size:14px;letter-spacing:2px');
+  }
+
+  if (window.fetch && location.protocol !== 'file:') {
+    fetch('content/site.json', { cache: 'no-cache' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(boot)
+      .catch(function () { boot(null); });
+  } else {
+    boot(null); // opened straight from disk — use built-in defaults
+  }
 })();

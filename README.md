@@ -17,8 +17,34 @@ python3 -m http.server 8000
 |---|---|
 | `index.html` | The full single-page site |
 | `css/styles.css` | Brand tokens + motion system |
-| `js/main.js` | Integration config, quiz, calendar, scheduling, newsletter, motion controllers |
+| `js/main.js` | Quiz, calendar, scheduling, newsletter, motion controllers |
+| **`content/site.json`** | **All editable content — events, testimonials, booking links** |
+| **`admin/index.html`** | **Browser-based editor for that file (no build, no backend)** |
 | `assets/` | Photography (see *Pending assets*) |
+
+---
+
+## ✏️ Editing content without touching code
+
+Events, testimonials, and every integration link live in **`content/site.json`**.
+The site fetches it at runtime and falls back to built-in defaults if it's ever
+missing, so a bad edit can't take the page down.
+
+**The easy way — visit `/admin` on the live site** (e.g. `thestrongacademy.com/admin`):
+
+1. Edit events (including the sold-out toggle), quotes, and booking links in a form.
+2. Click **Copy JSON**.
+3. Click **Open site.json on GitHub** → pencil icon → paste over everything → **Commit changes**.
+4. Vercel redeploys automatically. Live in ~30 seconds.
+
+`/admin` is a static page — no login, no database, no server. It never writes
+anything by itself; committing on GitHub is what publishes. It's `noindex`, but
+because it's public, don't put anything sensitive in it.
+
+**The direct way:** edit `content/site.json` on GitHub and commit. Same result.
+
+Dates are `YYYY-MM-DD`. `soldOut: true` swaps "Save spot" for a SOLD OUT tag and a
+"Notify me" button.
 
 ---
 
