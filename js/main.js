@@ -740,7 +740,10 @@
     console.log('%cBe well. Stay committed. Train for life. ✦', 'color:#8400C8;font-size:14px;letter-spacing:2px');
   }
 
-  if (window.fetch && location.protocol !== 'file:') {
+  if (window.__SITE_CONTENT__) {
+    // Single-file/offline build: content is inlined rather than fetched.
+    boot(window.__SITE_CONTENT__);
+  } else if (window.fetch && location.protocol !== 'file:') {
     fetch('content/site.json', { cache: 'no-cache' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(boot)
