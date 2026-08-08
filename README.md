@@ -15,12 +15,18 @@ python3 -m http.server 8000
 
 | Path | What it is |
 |---|---|
-| `index.html` | The full single-page site |
-| `css/styles.css` | Brand tokens + motion system |
-| `js/main.js` | Quiz, calendar, scheduling, newsletter, motion controllers |
+| `index.html` | Homepage |
+| `everstrong-at-work/index.html` | Corporate wellness page (`/everstrong-at-work`) |
+| `css/styles.css` | Brand tokens + motion system, shared by both pages |
+| `js/common.js` | Shared chrome: nav, reveals, parallax, magnetic CTAs. Null-safe, loaded everywhere |
+| `js/newsletter.js` | Footer mailing-list form, loaded everywhere |
+| `js/main.js` | Homepage-only: quiz, calendar, scheduling, content loading |
 | **`content/site.json`** | **All editable content — events, testimonials, booking links** |
 | **`admin/index.html`** | **Browser-based editor for that file (no build, no backend)** |
 | `assets/` | Photography (see *Pending assets*) |
+
+Corporate CTAs link to `/?svc=workforce#book`, which deep-links to the homepage
+booking section with that service preselected.
 
 ---
 

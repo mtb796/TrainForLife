@@ -1239,6 +1239,176 @@ section[id], header[id] { scroll-margin-top: 84px; }
   color: var(--text-muted);
 }
 
+/* ============================================================
+   EverSTRONG at Work — corporate page
+   Deliberately different layout families per section so the page
+   never reads as the same grid repeated five times.
+   ============================================================ */
+
+/* typographic hero — no photography for this page, so the type is the image */
+.page-hero {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background:
+    radial-gradient(120% 100% at 15% 0%, rgba(132, 0, 200, 0.22), transparent 62%),
+    var(--black);
+}
+.page-hero-inner {
+  position: relative;
+  z-index: 1;
+  padding-top: clamp(72px, 12vw, 148px);
+  padding-bottom: clamp(56px, 9vw, 112px);
+  max-width: 900px;
+}
+.page-hero h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(46px, 8vw, 108px);
+  line-height: 0.94;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+.page-hero-sub {
+  margin: 22px 0 34px;
+  max-width: 560px;
+  font-size: clamp(15px, 1.7vw, 19px);
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+
+/* section lede — used instead of an eyebrow so the page stays label-light */
+.lede {
+  margin: 14px 0 0;
+  max-width: 620px;
+  font-size: clamp(16px, 1.8vw, 20px);
+  line-height: 1.6;
+  color: var(--blush);
+}
+.sub-lede { margin: 14px 0 0; max-width: 620px; line-height: 1.75; color: var(--text-muted); }
+
+/* 1. fractional services — two-column card grid */
+.svc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px;
+  margin-top: 38px;
+}
+.svc-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--vurple);
+  border-radius: 8px;
+  padding: 22px 24px;
+  transition: border-color .3s var(--ease-out-quart), transform .3s var(--ease-out-quart);
+}
+.svc-item:hover { transform: translateY(-4px); border-color: var(--mid-gray); border-left-color: var(--vurple-hover); }
+.svc-item h3 {
+  margin: 0 0 8px;
+  font-family: var(--display);
+  font-size: 23px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+.svc-item p { margin: 0; line-height: 1.7; color: var(--text-muted); font-size: 15px; }
+
+/* 2. how it works — a real sequence, so numerals carry meaning here */
+.steps-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: clamp(24px, 4vw, 48px);
+  margin-top: 38px;
+  counter-reset: step;
+}
+.step { position: relative; padding-top: 14px; border-top: 2px solid var(--vurple); counter-increment: step; }
+.step::before {
+  content: counter(step, decimal-leading-zero);
+  display: block;
+  font-family: var(--display);
+  font-size: 44px;
+  line-height: 1;
+  color: var(--vurple-hover);
+  margin-bottom: 10px;
+}
+.step p { margin: 0; line-height: 1.7; color: var(--text-muted); }
+
+/* 3. individual services — divided list, not cards */
+.offer-list { margin-top: 34px; border-top: 1px solid var(--border); }
+.offer {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.9fr) 1.1fr;
+  gap: 8px clamp(20px, 4vw, 48px);
+  padding: 22px 4px;
+  border-bottom: 1px solid var(--border);
+  transition: background-color .25s var(--ease-out-quart), padding-left .25s var(--ease-out-quart);
+}
+.offer:hover { background: rgba(132, 0, 200, 0.07); padding-left: 14px; }
+@media (max-width: 720px) { .offer { grid-template-columns: 1fr; } }
+.offer h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 22px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 400;
+  color: var(--blush);
+}
+.offer p { margin: 0; line-height: 1.7; color: var(--text-muted); font-size: 15px; }
+
+/* 4. who we serve — tinted tiles */
+.serve-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 38px;
+}
+.serve-tile {
+  background: linear-gradient(160deg, var(--vurple-deep), var(--black));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 26px 24px;
+  min-height: 132px;
+  display: flex;
+  align-items: center;
+  line-height: 1.6;
+  color: var(--blush);
+  font-size: 16px;
+  transition: border-color .3s var(--ease-out-quart);
+}
+.serve-tile:hover { border-color: var(--vurple-hover); }
+.serve-tile b { font-weight: 500; }
+
+/* 5. why us — hairline-separated row, different rhythm from the tiles */
+.why-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0;
+  margin-top: 34px;
+  border-top: 1px solid var(--border);
+}
+.why-item {
+  padding: 24px clamp(14px, 2.5vw, 28px) 26px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  line-height: 1.7;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+.why-item:last-child { border-right: none; }
+.why-item::before {
+  content: "";
+  display: block;
+  width: 26px;
+  height: 2px;
+  background: var(--vurple-hover);
+  margin-bottom: 14px;
+}
+
+.section-cta { margin-top: 34px; display: flex; flex-wrap: wrap; gap: 14px; }
+
 /* ---------- magnetic buttons ---------- */
 
 .magnetic { will-change: transform; }
