@@ -87,7 +87,27 @@ var EVENTBRITE = {
 ```
 Until `organizer` is set, the seeded schedule in `eventList()` is displayed.
 
-### 3. Package checkout (`PACKAGES`)
+### 3. Waitlist emails ("Notify me")
+
+A static page can't send email, so sold-out classes POST to
+`api/waitlist.js`, a Vercel Serverless Function. **Until it's configured the
+site falls back to opening a pre-filled email** — the visitor presses send and
+the request still reaches Venus. Nobody is ever told they're on a waitlist
+when no message was actually delivered.
+
+To switch on automatic delivery, add these in **Vercel → Settings →
+Environment Variables**, then redeploy:
+
+| Variable | Value |
+|---|---|
+| `RESEND_API_KEY` | `re_…` from [resend.com](https://resend.com) (free tier is plenty) |
+| `WAITLIST_TO` | `hello@thestrongacademy.com` |
+| `WAITLIST_FROM` | an address on your verified sending domain |
+
+Any provider with a REST send endpoint works — swap the `fetch` call in
+`api/waitlist.js`.
+
+### 4. Package checkout (`PACKAGES`)
 Add a Stripe / Square / Calendly paid-event link per package. While
 `checkoutUrl` is empty the button routes to the scheduler instead of a checkout.
 

@@ -41,12 +41,14 @@ section{background:var(--dark-gray);border:1px solid #2A2A2B;border-radius:10px;
 .sec-body{padding:20px 22px;display:flex;flex-direction:column;gap:14px}
 
 label{display:block;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--light-gray);margin-bottom:5px;font-weight:500}
-input[type=text],input[type=url],input[type=date],textarea{
+input[type=text],input[type=url],input[type=date],select,textarea{
   width:100%;background:var(--black);border:1px solid var(--mid-gray);border-radius:6px;
   padding:11px 12px;color:var(--blush);font-family:var(--body);font-size:14px;transition:border-color .2s var(--ease)}
-input:focus,textarea:focus{outline:none;border-color:var(--vurple-hover)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--vurple-hover)}
 input::placeholder,textarea::placeholder{color:#6a6a6d}
 textarea{resize:vertical;min-height:66px;line-height:1.6}
+select{appearance:none;cursor:pointer}
+select:disabled,input:disabled{opacity:.45;cursor:not-allowed}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
 
 .row{background:var(--black);border:1px solid #2A2A2B;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px;transition:border-color .2s var(--ease)}
@@ -196,6 +198,13 @@ pre{margin:0;background:var(--black);border:1px solid #2A2A2B;border-radius:8px;
         '<div><label>Title</label><input type="text" class="f-title" placeholder="EverSTRONG Class"></div>' +
       '</div>' +
       '<div><label>Details</label><input type="text" class="f-meta" placeholder="9:00 AM · semi-private 5:1"></div>' +
+      '<div><label>Registration link <span style="text-transform:none;letter-spacing:0">(where “Save spot” sends people)</span></label>' +
+        '<input type="url" class="f-link" placeholder="https://vaarlingtonweb.myvscloud.com/…"></div>' +
+      '<div class="row-top">' +
+        '<div><label>Repeats</label><select class="f-rep">' +
+          '<option value="">One-off</option><option value="weekly">Every week</option></select></div>' +
+        '<div><label>Repeat until</label><input type="date" class="f-until"></div>' +
+      '</div>' +
       '<div class="row-foot">' +
         '<label class="toggle"><input type="checkbox" class="f-sold"><span class="track"></span>' +
         '<span class="f-lbl"></span></label>' +
@@ -204,19 +213,24 @@ pre{margin:0;background:var(--black);border:1px solid #2A2A2B;border-radius:8px;
 
     var d = row.querySelector('.f-date'), t = row.querySelector('.f-title'),
         m = row.querySelector('.f-meta'), s = row.querySelector('.f-sold'),
-        lbl = row.querySelector('.f-lbl');
+        lbl = row.querySelector('.f-lbl'), lk = row.querySelector('.f-link'),
+        rep = row.querySelector('.f-rep'), until = row.querySelector('.f-until');
     d.value = ev.date || ''; t.value = ev.title || ''; m.value = ev.meta || ''; s.checked = !!ev.soldOut;
+    lk.value = ev.link || ''; rep.value = ev.repeat || ''; until.value = ev.until || '';
     function syncLabel() {
       lbl.textContent = s.checked ? 'Sold out — shows “Notify me”' : 'Open — shows “Save spot”';
       row.className = 'row ' + (s.checked ? 'is-soldout' : 'is-open');
+      until.disabled = rep.value !== 'weekly';
     }
     syncLabel();
     function upd() {
-      data.events[idx] = { date: d.value, title: t.value, meta: m.value, soldOut: s.checked };
+      var o = { date: d.value, title: t.value, meta: m.value, soldOut: s.checked, link: lk.value.trim() };
+      if (rep.value === 'weekly' && until.value) { o.repeat = 'weekly'; o.until = until.value; }
+      data.events[idx] = o;
       syncLabel(); render();
     }
-    [d, t, m].forEach(function (el) { el.addEventListener('input', upd); });
-    s.addEventListener('change', upd);
+    [d, t, m, lk, until].forEach(function (el) { el.addEventListener('input', upd); });
+    [s, rep].forEach(function (el) { el.addEventListener('change', upd); });
     row.querySelector('.f-del').addEventListener('click', function () {
       data.events.splice(idx, 1); drawEvents(); render();
     });

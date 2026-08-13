@@ -1,5 +1,5 @@
 {
-  "_comment": "Editable site content. Change this file (via /admin or GitHub) and Vercel redeploys automatically. Dates are YYYY-MM-DD.",
+  "_comment": "Editable site content. Change this file (via /admin or GitHub) and Vercel redeploys automatically. Dates are YYYY-MM-DD. An event with repeat:'weekly' and an 'until' date expands into one entry per week on the site.",
 
   "integrations": {
     "calendly": {
@@ -16,26 +16,71 @@
       "single": "",
       "fourpack": "",
       "twelvepack": ""
+    },
+    "waitlist": {
+      "endpoint": "/api/waitlist",
+      "fallbackEmail": "hello@thestrongacademy.com"
     }
   },
 
   "events": [
-    { "date": "2026-08-04", "title": "TeamSTRONG Outdoor Circuit", "meta": "6:00 PM · Long Bridge Park, Arlington", "soldOut": false },
-    { "date": "2026-08-06", "title": "EverSTRONG Class", "meta": "9:00 AM · semi-private 5:1", "soldOut": true },
-    { "date": "2026-08-07", "title": "Expert Seminar: Heart Health After 40", "meta": "10:00 AM · with guest cardiologist", "soldOut": false },
-    { "date": "2026-08-09", "title": "Strong Camp L1", "meta": "8:00 AM · six-week foundations camp", "soldOut": true },
-    { "date": "2026-08-11", "title": "EverSTRONG Class", "meta": "9:00 AM · semi-private 5:1", "soldOut": true },
-    { "date": "2026-08-13", "title": "TeamSTRONG Outdoor Circuit", "meta": "6:00 PM · Long Bridge Park, Arlington", "soldOut": false },
-    { "date": "2026-08-16", "title": "Strong Camp L1", "meta": "8:00 AM · six-week foundations camp", "soldOut": true },
-    { "date": "2026-08-18", "title": "EverSTRONG Class", "meta": "9:00 AM · semi-private 5:1", "soldOut": true },
-    { "date": "2026-08-21", "title": "Lunch & Learn: The Longevity Blueprint", "meta": "12:00 PM · corporate host", "soldOut": false },
-    { "date": "2026-08-23", "title": "Strong Camp L1", "meta": "8:00 AM · six-week foundations camp", "soldOut": true },
-    { "date": "2026-08-25", "title": "EverSTRONG Class", "meta": "9:00 AM · semi-private 5:1", "soldOut": true },
-    { "date": "2026-08-28", "title": "TeamSTRONG Outdoor Circuit", "meta": "6:00 PM · Long Bridge Park, Arlington", "soldOut": false },
-    { "date": "2026-09-01", "title": "EverSTRONG Class", "meta": "9:00 AM · semi-private 5:1", "soldOut": true },
-    { "date": "2026-09-06", "title": "Pop-Up: Free Mobility Screening", "meta": "9:00 AM · Long Bridge Park", "soldOut": false },
-    { "date": "2026-09-09", "title": "Strong Camp L1", "meta": "8:00 AM · six-week foundations camp", "soldOut": true },
-    { "date": "2026-09-15", "title": "EverSTRONG Class", "meta": "9:00 AM · semi-private 5:1", "soldOut": true }
+    {
+      "date": "2026-09-15",
+      "title": "Strong Camp L1",
+      "meta": "7:10 PM · Tuesdays · Arlington County",
+      "soldOut": true,
+      "link": "https://vaarlingtonweb.myvscloud.com/webtrac/web/iteminfo.html?Module=AR&FMID=372172173",
+      "repeat": "weekly",
+      "until": "2026-12-15"
+    },
+    {
+      "date": "2026-09-12",
+      "title": "Strong Camp L1",
+      "meta": "9:15 AM · Saturdays · Arlington County",
+      "soldOut": true,
+      "link": "https://vaarlingtonweb.myvscloud.com/webtrac/web/iteminfo.html?Module=AR&FMID=372172186",
+      "repeat": "weekly",
+      "until": "2026-12-19"
+    },
+    {
+      "date": "2026-09-12",
+      "title": "EverSTRONG",
+      "meta": "10:30 AM · Saturdays · Arlington County",
+      "soldOut": false,
+      "link": "https://vaarlingtonweb.myvscloud.com/webtrac/web/iteminfo.html?Module=AR&FMID=372172232",
+      "repeat": "weekly",
+      "until": "2026-12-19"
+    },
+    {
+      "date": "2026-08-20",
+      "title": "TeamSTRONG Outdoor Circuit",
+      "meta": "6:00 PM · Thursdays · Long Bridge Park, Arlington",
+      "soldOut": true,
+      "link": "",
+      "repeat": "weekly",
+      "until": "2026-10-29"
+    },
+    {
+      "date": "2026-09-24",
+      "title": "Lunch & Learn: The Longevity Blueprint",
+      "meta": "12:00 PM · corporate host",
+      "soldOut": true,
+      "link": ""
+    },
+    {
+      "date": "2026-09-19",
+      "title": "Expert Seminar: Heart Health After 40",
+      "meta": "10:00 AM · with guest cardiologist (placeholder date)",
+      "soldOut": false,
+      "link": ""
+    },
+    {
+      "date": "2026-10-10",
+      "title": "Pop-Up: Free Mobility Screening",
+      "meta": "9:00 AM · Long Bridge Park (placeholder date)",
+      "soldOut": false,
+      "link": ""
+    }
   ],
 
   "testimonials": [

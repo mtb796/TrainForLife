@@ -304,8 +304,10 @@
     state.monthOffset++; state.selKey = null; renderCalendar(); renderEvents();
   });
 
+  // Registration destination, most specific first: the event's own link,
+  // then a per-title Eventbrite link, then the Eventbrite organizer page.
   function ticketUrl(ev) {
-    return EVENTBRITE.events[ev.title] || EVENTBRITE.organizer || '';
+    return ev.link || EVENTBRITE.events[ev.title] || EVENTBRITE.organizer || '';
   }
 
   function renderEvents() {
@@ -354,20 +356,18 @@
         notify.type = 'button';
         notify.className = 'event-cta notify';
         notify.innerHTML = 'Notify me <span class="arrow-glyph">→</span>';
-        notify.addEventListener('click', function () {
-          notify.classList.add('notified');
-          notify.classList.remove('notify');
-          notify.textContent = '✦ On the waitlist';
-          notify.disabled = true;
-          var news = document.getElementById('newsEmail');
-          if (news) news.focus({ preventScroll: false });
-        });
+        notify.addEventListener('click', function () { openWaitlist(e, notify); });
         row.appendChild(notify);
       } else {
+        var href = ticketUrl(e);
         var link = document.createElement('a');
         link.className = 'event-cta';
-        link.href = ticketUrl(e) || '#book';
-        if (ticketUrl(e)) { link.target = '_blank'; link.rel = 'noopener'; }
+        link.href = href || '#book';
+        if (href) {
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.setAttribute('aria-label', 'Save your spot for ' + e.title + ' (opens registration in a new tab)');
+        }
         link.innerHTML = 'Save spot <span class="arrow-glyph">→</span>';
         row.appendChild(link);
       }
@@ -388,6 +388,149 @@
     renderCalendar();
     renderEvents();
   });
+
+  /* ============ waitlist ("Notify me") ============ */
+
+  var waitCfg = { endpoint: '/api/waitlist', fallbackEmail: 'hello@thestrongacademy.com' };
+  var waitEl = null;
+
+  function mailtoFallback(ev, name, email) {
+    var subject = 'Waitlist request — ' + ev.title;
+    var lines = [
+      'Please add me to the waitlist.', '',
+      'Name: ' + name,
+      'Email: ' + email,
+      'Class: ' + ev.title,
+      'Date: ' + ev.d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+    ];
+    return 'mailto:' + waitCfg.fallbackEmail +
+      '?subject=' + encodeURIComponent(subject) +
+      '&body=' + encodeURIComponent(lines.join('\n'));
+  }
+
+  function closeWaitlist() {
+    if (!waitEl) return;
+    waitEl.remove();
+    waitEl = null;
+    document.removeEventListener('keydown', onWaitKey);
+  }
+
+  function onWaitKey(e) { if (e.key === 'Escape') closeWaitlist(); }
+
+  function openWaitlist(ev, trigger) {
+    closeWaitlist();
+    var dateLabel = ev.d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+    waitEl = document.createElement('div');
+    waitEl.className = 'modal-backdrop';
+    waitEl.innerHTML =
+      '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="wlTitle">' +
+        '<button class="modal-close" type="button" aria-label="Close">&times;</button>' +
+        '<p class="modal-eyebrow">Join the waitlist</p>' +
+        '<h3 class="modal-title" id="wlTitle"></h3>' +
+        '<p class="modal-meta"></p>' +
+        '<div class="field"><label for="wlName">Name</label>' +
+          '<input id="wlName" type="text" autocomplete="name" placeholder="Alex Rivera"></div>' +
+        '<div class="field"><label for="wlEmail">Email</label>' +
+          '<input id="wlEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>' +
+        '<p class="form-error" id="wlErr" hidden></p>' +
+        '<button class="btn btn-primary" id="wlSend"><span class="btn-label">Notify me when a spot opens</span></button>' +
+        '<p class="modal-note">We\'ll only email you about this class.</p>' +
+      '</div>';
+    waitEl.querySelector('.modal-title').textContent = ev.title;
+    waitEl.querySelector('.modal-meta').textContent = dateLabel + ' · ' + ev.meta;
+    document.body.appendChild(waitEl);
+
+    var nameI = waitEl.querySelector('#wlName');
+    var mailI = waitEl.querySelector('#wlEmail');
+    var errEl = waitEl.querySelector('#wlErr');
+    var sendB = waitEl.querySelector('#wlSend');
+
+    nameI.focus();
+    document.addEventListener('keydown', onWaitKey);
+    waitEl.querySelector('.modal-close').addEventListener('click', closeWaitlist);
+    waitEl.addEventListener('mousedown', function (e) { if (e.target === waitEl) closeWaitlist(); });
+
+    // keep focus inside the dialog
+    waitEl.addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab') return;
+      var f = waitEl.querySelectorAll('button, input');
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+
+    function fail(msg) { errEl.textContent = msg; errEl.hidden = false; }
+
+    // Fallback view: an explicit "send this email" step, so nobody is told
+    // they're on a waitlist when no message was actually delivered.
+    function showMailFallback(evt, name, email) {
+      var box = waitEl.querySelector('.modal');
+      box.innerHTML =
+        '<button class="modal-close" type="button" aria-label="Close">&times;</button>' +
+        '<p class="modal-eyebrow">One more step</p>' +
+        '<h3 class="modal-title">Send your request</h3>' +
+        '<p class="modal-meta"></p>' +
+        '<a class="btn btn-primary" id="wlMail"><span class="btn-label">Open email &amp; send</span></a>' +
+        '<p class="modal-note">Or email <a href="mailto:' + waitCfg.fallbackEmail + '">' +
+          waitCfg.fallbackEmail + '</a> directly.</p>';
+      box.querySelector('.modal-meta').textContent =
+        'Automatic notifications aren’t switched on yet, so we’ve written the email for you. ' +
+        'Just press send and Venus will add you to the list for ' + evt.title + '.';
+      box.querySelector('.modal-close').addEventListener('click', closeWaitlist);
+      var mail = box.querySelector('#wlMail');
+      mail.href = mailtoFallback(evt, name, email);
+      mail.addEventListener('click', function () {
+        // they've actually sent it — now it's fair to mark the row
+        setTimeout(function () {
+          if (trigger) {
+            trigger.classList.remove('notify');
+            trigger.classList.add('notified');
+            trigger.textContent = '✦ On the waitlist';
+            trigger.disabled = true;
+          }
+          closeWaitlist();
+        }, 400);
+      });
+      mail.focus();
+    }
+
+    function succeed() {
+      closeWaitlist();
+      if (trigger) {
+        trigger.classList.remove('notify');
+        trigger.classList.add('notified');
+        trigger.textContent = '✦ On the waitlist';
+        trigger.disabled = true;
+      }
+    }
+
+    sendB.addEventListener('click', function () {
+      var name = nameI.value.trim(), email = mailI.value.trim();
+      if (!name) return fail('Please add your name.');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return fail('Enter a valid email address.');
+      errEl.hidden = true;
+      sendB.disabled = true;
+      sendB.querySelector('.btn-label').textContent = 'Sending…';
+
+      fetch(waitCfg.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name, email: email, event: ev.title,
+          date: ev.d.toISOString().slice(0, 10)
+        })
+      }).then(function (r) {
+        if (r.ok) return succeed();
+        throw new Error('endpoint unavailable');
+      }).catch(function () {
+        // Email delivery isn't configured (or failed). Never claim success we
+        // can't verify — hand over a pre-filled email and let the visitor send
+        // it, marking them on the waitlist only once they actually do.
+        showMailFallback(ev, name, email);
+      });
+    });
+  }
 
   /* ============ booking — Calendly ============ */
 
@@ -535,6 +678,36 @@
     return new Date(+p[0], +p[1] - 1, +p[2]);
   }
 
+  // A weekly series becomes one entry per week so it appears on every
+  // calendar date it actually runs. Capped as a runaway guard.
+  var MAX_OCCURRENCES = 200;
+
+  function expandEvents(list) {
+    var out = [];
+    list.forEach(function (e) {
+      var base = {
+        title: e.title, meta: e.meta,
+        soldOut: !!e.soldOut, link: e.link || ''
+      };
+      var start = parseDate(e.date);
+      if (isNaN(start)) return;
+
+      if (e.repeat === 'weekly' && e.until) {
+        var end = parseDate(e.until);
+        if (isNaN(end) || end < start) { out.push(Object.assign({ d: start }, base)); return; }
+        var d = new Date(start), n = 0;
+        while (d <= end && n < MAX_OCCURRENCES) {
+          out.push(Object.assign({ d: new Date(d) }, base));
+          d.setDate(d.getDate() + 7);
+          n++;
+        }
+      } else {
+        out.push(Object.assign({ d: start }, base));
+      }
+    });
+    return out;
+  }
+
   function applyContent(c) {
     if (!c) return;
     var i = c.integrations || {};
@@ -548,10 +721,12 @@
     if (i.packages) Object.keys(PACKAGES).forEach(function (k) {
       if (typeof i.packages[k] === 'string') PACKAGES[k].checkoutUrl = i.packages[k];
     });
+    if (i.waitlist) {
+      if (i.waitlist.endpoint) waitCfg.endpoint = i.waitlist.endpoint;
+      if (i.waitlist.fallbackEmail) waitCfg.fallbackEmail = i.waitlist.fallbackEmail;
+    }
     if (Array.isArray(c.events) && c.events.length) {
-      indexEvents(c.events.map(function (e) {
-        return { d: parseDate(e.date), title: e.title, meta: e.meta, soldOut: !!e.soldOut };
-      }));
+      indexEvents(expandEvents(c.events));
     }
     renderTestimonials(c.testimonials);
   }
