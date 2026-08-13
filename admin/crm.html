@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>CRM — The Strong Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#000;--dark-gray:#222223;--mid-gray:#616161;--light-gray:#B7B6BA;
+  --blush:#EFE7E2;--vurple:#8400C8;--vurple-hover:#9D33D3;--white:#fff;
+  --new:#60A5FA;--contacted:#FBBF24;--booked:#4ADE80;--won:#34D399;--lost:#9CA3AF;--cancelled:#F87171;
+  --display:'Bebas Neue',sans-serif;--body:'DM Sans',system-ui,sans-serif;
+  --ease:cubic-bezier(.25,1,.5,1);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--black);color:var(--blush);font-family:var(--body);font-weight:300;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--vurple-hover);outline-offset:2px;border-radius:3px}
+a{color:var(--blush)}
+
+header{position:sticky;top:0;z-index:20;background:rgba(0,0,0,.95);backdrop-filter:blur(12px);border-bottom:1px solid #2A2A2B}
+.hd{max-width:1240px;margin:0 auto;padding:12px clamp(14px,3vw,28px);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:2px;line-height:1}
+.brand i{color:var(--vurple-hover);font-style:normal}
+.brand small{display:block;font-family:var(--body);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--light-gray);font-weight:400}
+.hd nav{display:flex;gap:8px;flex-wrap:wrap}
+
+main{max-width:1240px;margin:0 auto;padding:clamp(16px,3vw,28px) clamp(14px,3vw,28px) 90px;display:flex;flex-direction:column;gap:20px}
+
+button,.btn{font-family:var(--display);font-size:15px;letter-spacing:1.5px;text-transform:uppercase;border:none;border-radius:5px;padding:11px 16px;min-height:44px;cursor:pointer;transition:background .2s var(--ease),border-color .2s var(--ease),color .2s var(--ease);display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.btn-primary{background:var(--vurple);color:var(--white)}
+.btn-primary:hover{background:var(--vurple-hover)}
+.btn-ghost{background:none;border:1px solid var(--mid-gray);color:var(--blush)}
+.btn-ghost:hover{border-color:var(--vurple-hover)}
+.btn-ghost.on{border-color:var(--vurple-hover);background:rgba(132,0,200,.18)}
+
+input,select,textarea{width:100%;background:var(--black);border:1px solid var(--mid-gray);border-radius:6px;padding:12px;color:var(--blush);font-family:var(--body);font-size:14px;min-height:44px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--vurple-hover)}
+label{display:block;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--light-gray);margin-bottom:5px;font-weight:500}
+
+/* gate */
+#gate{min-height:70vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.gate-card{width:min(400px,100%);background:var(--dark-gray);border:1px solid var(--vurple-hover);border-radius:12px;padding:32px;display:flex;flex-direction:column;gap:14px}
+.gate-card h1{margin:0;font-family:var(--display);font-size:32px;letter-spacing:2px;text-transform:uppercase;font-weight:400}
+.gate-card p{margin:0;font-size:14px;color:var(--light-gray);line-height:1.6}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.stat{background:var(--dark-gray);border:1px solid #2A2A2B;border-radius:10px;padding:16px 18px;min-width:0}
+.stat b{display:block;font-family:var(--display);font-size:34px;line-height:1;color:var(--blush)}
+.stat span{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--light-gray)}
+
+/* toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.toolbar .grow{flex:1;min-width:180px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--display);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;background:none;border:1px solid var(--mid-gray);color:var(--light-gray);border-radius:999px;padding:8px 14px;min-height:40px;cursor:pointer}
+.chip.on{border-color:var(--vurple-hover);color:var(--blush);background:rgba(132,0,200,.2)}
+
+/* leads */
+.leads{display:flex;flex-direction:column;gap:10px}
+.lead{background:var(--dark-gray);border:1px solid #2A2A2B;border-left:3px solid var(--mid-gray);border-radius:10px;padding:16px 18px;display:grid;grid-template-columns:1fr auto;gap:10px 16px;min-width:0}
+.lead[data-status=new]{border-left-color:var(--new)}
+.lead[data-status=contacted]{border-left-color:var(--contacted)}
+.lead[data-status=booked]{border-left-color:var(--booked)}
+.lead[data-status=won]{border-left-color:var(--won)}
+.lead[data-status=lost]{border-left-color:var(--lost)}
+.lead[data-status=cancelled]{border-left-color:var(--cancelled)}
+.lead-main{min-width:0}
+.lead-top{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.lead-name{font-weight:500;font-size:16px}
+.tag{font-family:var(--display);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;border-radius:999px;padding:3px 9px;background:#2A2A2B;color:var(--light-gray)}
+.tag.src{background:rgba(132,0,200,.25);color:var(--blush)}
+.lead-meta{margin:5px 0 0;font-size:13px;color:var(--light-gray);word-break:break-word}
+.lead-msg{margin:8px 0 0;font-size:13px;color:var(--light-gray);white-space:pre-wrap;border-left:2px solid #2A2A2B;padding-left:10px}
+.lead-side{display:flex;flex-direction:column;gap:8px;align-items:stretch;min-width:150px}
+.lead-side select{min-height:40px;padding:8px 10px;font-size:13px}
+.when{font-size:12px;color:var(--mid-gray);text-align:right}
+@media(max-width:640px){.lead{grid-template-columns:1fr}.lead-side{min-width:0}.when{text-align:left}}
+
+.empty{padding:36px;text-align:center;color:var(--light-gray);background:var(--dark-gray);border:1px dashed var(--mid-gray);border-radius:10px}
+.note{font-size:13px;color:var(--light-gray);line-height:1.6}
+.warn{border-left:3px solid var(--contacted);padding-left:12px}
+.err{color:#F87171;font-size:13px}
+
+section.panel{background:var(--dark-gray);border:1px solid #2A2A2B;border-radius:10px;overflow:hidden}
+.panel-hd{padding:14px 18px;border-bottom:1px solid #2A2A2B;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.panel-hd h2{margin:0;font-family:var(--display);font-size:20px;letter-spacing:2px;text-transform:uppercase;font-weight:400}
+.panel-bd{padding:18px;display:flex;flex-direction:column;gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid #2A2A2B;vertical-align:top}
+th{font-family:var(--display);font-size:12px;letter-spacing:1.5px;color:var(--light-gray);font-weight:400}
+.scroll-x{overflow-x:auto}
+code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--black);border:1px solid #2A2A2B;border-radius:4px;padding:2px 6px}
+</style>
+</head>
+<body>
+
+<div id="gate" hidden>
+  <form class="gate-card" id="gateForm">
+    <h1>The Str<span style="color:var(--vurple-hover)">v</span>ng Academy</h1>
+    <p>Sign in to view inquiries and bookings.</p>
+    <div>
+      <label for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password">
+    </div>
+    <p class="err" id="gateErr" hidden></p>
+    <button class="btn-primary" type="submit">Sign in</button>
+    <p class="note" id="gateNote" hidden></p>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <header>
+    <div class="hd">
+      <div class="brand">THE STR<i>V</i>NG ACADEMY<small>CRM</small></div>
+      <nav>
+        <a class="btn btn-ghost" href="./">Content editor</a>
+        <a class="btn btn-ghost" href="../">View site</a>
+        <button class="btn-ghost" id="refresh">Refresh</button>
+        <button class="btn-ghost" id="logout">Sign out</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="note warn" id="storageNote" hidden></p>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="toolbar">
+      <div class="grow"><input id="search" type="search" placeholder="Search name, email or class…"></div>
+      <button class="btn-ghost" id="exportCsv">Export CSV</button>
+    </div>
+    <div class="chips" id="statusChips"></div>
+    <div class="chips" id="sourceChips"></div>
+
+    <div class="leads" id="leads"></div>
+
+    <section class="panel">
+      <div class="panel-hd">
+        <h2>Calendly</h2>
+        <button class="btn-ghost" id="loadCal">Load event types</button>
+      </div>
+      <div class="panel-bd">
+        <p class="note" id="calNote">Connect <code>CALENDLY_TOKEN</code> to list bookable event types and create one-off sessions.</p>
+        <div class="scroll-x"><table id="calTable" hidden>
+          <thead><tr><th>Event type</th><th>Duration</th><th>Booking link</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+
+        <div class="grid2">
+          <div><label for="ooName">One-off session name</label><input id="ooName" placeholder="Private assessment"></div>
+          <div><label for="ooDur">Minutes</label><input id="ooDur" type="number" value="60" min="15" max="480"></div>
+          <div><label for="ooStart">Bookable from</label><input id="ooStart" type="date"></div>
+          <div><label for="ooEnd">Bookable until</label><input id="ooEnd" type="date"></div>
+        </div>
+        <div><button class="btn-primary" id="makeOneOff">Create one-off session</button></div>
+        <p class="note" id="ooResult" hidden></p>
+        <p class="note">Recurring event types are created in Calendly itself — its API only supports one-off creation. Once made there, they appear in the list above.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var $ = function(s){ return document.querySelector(s); };
+  var API = '/api';
+  var state = { status:'all', source:'all', q:'', leads:[] };
+
+  var STATUSES = ['all','new','contacted','booked','won','lost','cancelled'];
+  var SOURCES  = ['all','waitlist','booking','corporate','newsletter','contact'];
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  function when(iso){
+    if(!iso) return '';
+    var d = new Date(iso); if(isNaN(d)) return '';
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' · ' +
+           d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  }
+
+  /* ---------- auth ---------- */
+  function show(which){
+    $('#gate').hidden = which !== 'gate';
+    $('#app').hidden  = which !== 'app';
+  }
+
+  fetch(API+'/admin/login').then(function(r){ return r.json(); }).then(function(d){
+    if(d.authed){ show('app'); load(); }
+    else {
+      show('gate');
+      if(!d.configured){
+        var n = $('#gateNote'); n.hidden=false;
+        n.innerHTML = 'Admin access is not configured yet. Set <code>ADMIN_PASSWORD</code> and ' +
+                      '<code>SESSION_SECRET</code> in Vercel, then redeploy.';
+      }
+    }
+  }).catch(function(){ show('gate'); });
+
+  $('#gateForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var err = $('#gateErr'); err.hidden = true;
+    fetch(API+'/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:$('#pw').value})})
+      .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+      .then(function(x){
+        if(x.ok && x.d.ok){ show('app'); load(); }
+        else { err.textContent = x.d.error || 'Sign in failed.'; err.hidden = false; }
+      })
+      .catch(function(){ err.textContent='Network error.'; err.hidden=false; });
+  });
+
+  $('#logout').addEventListener('click', function(){
+    fetch(API+'/admin/login',{method:'DELETE'}).then(function(){ location.reload(); });
+  });
+  $('#refresh').addEventListener('click', load);
+
+  /* ---------- filters ---------- */
+  function chips(host, values, key){
+    host.innerHTML='';
+    values.forEach(function(v){
+      var b=document.createElement('button');
+      b.className='chip'+(state[key]===v?' on':'');
+      b.textContent=v;
+      b.addEventListener('click',function(){ state[key]=v; chips(host,values,key); load(); });
+      host.appendChild(b);
+    });
+  }
+  chips($('#statusChips'), STATUSES, 'status');
+  chips($('#sourceChips'), SOURCES, 'source');
+
+  var t;
+  $('#search').addEventListener('input', function(e){
+    clearTimeout(t); state.q = e.target.value.trim();
+    t = setTimeout(load, 280);
+  });
+
+  $('#exportCsv').addEventListener('click', function(){
+    var qs = new URLSearchParams({status:state.status,source:state.source,q:state.q,format:'csv'});
+    window.location = API+'/admin/leads?'+qs.toString();
+  });
+
+  /* ---------- leads ---------- */
+  function load(){
+    var qs = new URLSearchParams({status:state.status,source:state.source,q:state.q});
+    fetch(API+'/admin/leads?'+qs.toString())
+      .then(function(r){ if(r.status===401){ show('gate'); throw new Error('auth'); } return r.json(); })
+      .then(function(d){
+        if(!d.ok) throw new Error(d.error||'failed');
+        state.leads = d.leads||[];
+        renderStats(d.stats);
+        renderLeads();
+        var n=$('#storageNote');
+        if(d.storage!=='supabase'){
+          n.hidden=false;
+          n.innerHTML='Storing to a local file, not a database. Set <code>SUPABASE_URL</code> and '+
+                      '<code>SUPABASE_SERVICE_KEY</code> in Vercel — otherwise records will not survive a redeploy.';
+        } else n.hidden=true;
+      })
+      .catch(function(e){ if(e.message!=='auth') console.error(e); });
+  }
+
+  function renderStats(s){
+    if(!s) return;
+    var host=$('#stats'); host.innerHTML='';
+    var cards=[['Total',s.total]];
+    ['new','contacted','booked','won'].forEach(function(k){
+      cards.push([k, (s.byStatus&&s.byStatus[k])||0]);
+    });
+    cards.forEach(function(c){
+      var d=document.createElement('div'); d.className='stat';
+      d.innerHTML='<b>'+esc(c[1])+'</b><span>'+esc(c[0])+'</span>';
+      host.appendChild(d);
+    });
+  }
+
+  function renderLeads(){
+    var host=$('#leads'); host.innerHTML='';
+    if(!state.leads.length){
+      host.innerHTML='<div class="empty">No inquiries match this filter yet.</div>';
+      return;
+    }
+    state.leads.forEach(function(l){
+      var el=document.createElement('article');
+      el.className='lead'; el.setAttribute('data-status', l.status||'new');
+
+      var bits=[];
+      if(l.email) bits.push('<a href="mailto:'+esc(l.email)+'">'+esc(l.email)+'</a>');
+      if(l.phone) bits.push(esc(l.phone));
+      if(l.event_title) bits.push(esc(l.event_title));
+      if(l.event_date) bits.push(esc(String(l.event_date).slice(0,10)));
+
+      el.innerHTML =
+        '<div class="lead-main">'+
+          '<div class="lead-top">'+
+            '<span class="lead-name">'+esc(l.name||'(no name)')+'</span>'+
+            '<span class="tag src">'+esc(l.source||'contact')+'</span>'+
+            (l.interest?'<span class="tag">'+esc(l.interest)+'</span>':'')+
+          '</div>'+
+          '<p class="lead-meta">'+bits.join(' · ')+'</p>'+
+          (l.message?'<p class="lead-msg">'+esc(l.message)+'</p>':'')+
+        '</div>'+
+        '<div class="lead-side">'+
+          '<span class="when">'+esc(when(l.created_at))+'</span>'+
+          '<select class="st" aria-label="Status">'+
+            ['new','contacted','booked','won','lost','cancelled'].map(function(s){
+              return '<option value="'+s+'"'+((l.status||'new')===s?' selected':'')+'>'+s+'</option>';
+            }).join('')+
+          '</select>'+
+          '<button class="btn-ghost del" style="font-size:12px;min-height:38px">Delete</button>'+
+        '</div>';
+
+      el.querySelector('.st').addEventListener('change', function(e){
+        var v=e.target.value;
+        fetch(API+'/admin/leads',{method:'PATCH',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({id:l.id,status:v})})
+          .then(function(r){return r.json();})
+          .then(function(d){ if(d.ok){ l.status=v; el.setAttribute('data-status',v); load(); } });
+      });
+
+      el.querySelector('.del').addEventListener('click', function(){
+        if(!confirm('Delete this record permanently?')) return;
+        fetch(API+'/admin/leads?id='+encodeURIComponent(l.id),{method:'DELETE'})
+          .then(function(){ load(); });
+      });
+
+      host.appendChild(el);
+    });
+  }
+
+  /* ---------- Calendly ---------- */
+  $('#loadCal').addEventListener('click', function(){
+    var note=$('#calNote'), table=$('#calTable');
+    note.textContent='Loading…';
+    fetch(API+'/admin/calendly?action=event-types')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d.ok){ note.textContent=d.error; table.hidden=true; return; }
+        var tb=table.querySelector('tbody'); tb.innerHTML='';
+        (d.eventTypes||[]).forEach(function(t){
+          var tr=document.createElement('tr');
+          tr.innerHTML='<td>'+esc(t.name)+'</td><td>'+esc(t.duration)+' min</td>'+
+            '<td><a href="'+esc(t.scheduling_url)+'" target="_blank" rel="noopener">'+esc(t.slug||'open')+'</a></td>';
+          tb.appendChild(tr);
+        });
+        table.hidden = !(d.eventTypes||[]).length;
+        note.textContent = (d.eventTypes||[]).length
+          ? 'Paste a booking link into the content editor to wire it to a service.'
+          : 'No active event types found in Calendly.';
+      })
+      .catch(function(){ note.textContent='Could not reach Calendly.'; });
+  });
+
+  $('#makeOneOff').addEventListener('click', function(){
+    var out=$('#ooResult'); out.hidden=false; out.textContent='Creating…';
+    fetch(API+'/admin/calendly',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'one-off',name:$('#ooName').value,duration:$('#ooDur').value,
+        startDate:$('#ooStart').value,endDate:$('#ooEnd').value})})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d.ok){ out.textContent=d.error||'Could not create it.'; return; }
+        out.innerHTML='Created. Booking link: <a href="'+esc(d.schedulingUrl)+'" target="_blank" rel="noopener">'+
+          esc(d.schedulingUrl)+'</a>';
+      })
+      .catch(function(){ out.textContent='Network error.'; });
+  });
+})();
+</script>
+</body>
+</html>

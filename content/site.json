@@ -1,6 +1,5 @@
 {
   "_comment": "Editable site content. Change this file (via /admin or GitHub) and Vercel redeploys automatically. Dates are YYYY-MM-DD. An event with repeat:'weekly' and an 'until' date expands into one entry per week on the site.",
-
   "integrations": {
     "calendly": {
       "discovery": "",
@@ -18,11 +17,10 @@
       "twelvepack": ""
     },
     "waitlist": {
-      "endpoint": "/api/waitlist",
+      "endpoint": "/api/lead",
       "fallbackEmail": "hello@thestrongacademy.com"
     }
   },
-
   "events": [
     {
       "date": "2026-09-15",
@@ -82,10 +80,18 @@
       "link": ""
     }
   ],
-
   "testimonials": [
-    { "quote": "I came for the workouts and stayed for the people. Six months in, I feel ten years younger.", "who": "Pilot participant (placeholder)" },
-    { "quote": "Venus scales every circuit so my 62-year-old knees and my 25-year-old coworker both leave wrecked — in the best way.", "who": "TeamSTRONG regular (placeholder)" },
-    { "quote": "The seminars alone are worth it. Where else does your gym bring you a cardiologist?", "who": "EverSTRONG member (placeholder)" }
+    {
+      "quote": "I came for the workouts and stayed for the people. Six months in, I feel ten years younger.",
+      "who": "Pilot participant (placeholder)"
+    },
+    {
+      "quote": "Venus scales every circuit so my 62-year-old knees and my 25-year-old coworker both leave wrecked — in the best way.",
+      "who": "TeamSTRONG regular (placeholder)"
+    },
+    {
+      "quote": "The seminars alone are worth it. Where else does your gym bring you a cardiologist?",
+      "who": "EverSTRONG member (placeholder)"
+    }
   ]
 }

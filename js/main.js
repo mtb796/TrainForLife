@@ -391,7 +391,7 @@
 
   /* ============ waitlist ("Notify me") ============ */
 
-  var waitCfg = { endpoint: '/api/waitlist', fallbackEmail: 'hello@thestrongacademy.com' };
+  var waitCfg = { endpoint: '/api/lead', fallbackEmail: 'hello@thestrongacademy.com' };
   var waitEl = null;
 
   function mailtoFallback(ev, name, email) {
@@ -517,6 +517,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          source: 'waitlist',
           name: name, email: email, event: ev.title,
           date: ev.d.toISOString().slice(0, 10)
         })
