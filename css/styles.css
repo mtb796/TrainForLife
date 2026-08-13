@@ -64,6 +64,10 @@ body {
 
 img { max-width: 100%; display: block; }
 
+/* Long unbroken words in condensed display type can push past their box */
+h1, h2, h3, .h2, .hero-title, .program-title, .cta-title { overflow-wrap: break-word; }
+.program-grid > *, .pricing-grid > *, .svc-grid > *, .serve-grid > * { min-width: 0; }
+
 a { color: var(--blush); text-decoration: none; transition: color 0.2s var(--ease-out-quart); }
 a:hover { color: var(--white); }
 
@@ -97,6 +101,7 @@ section[id], header[id] { scroll-margin-top: 84px; }
   letter-spacing: 2px;
   transition: transform 0.25s var(--ease-out-quart);
 }
+.skip-link { min-height: 44px; display: inline-flex; align-items: center; }
 .skip-link:focus { transform: translate(-50%, 0); color: var(--white); }
 
 /* ---------- type ---------- */
@@ -145,7 +150,10 @@ section[id], header[id] { scroll-margin-top: 84px; }
 /* ---------- buttons ---------- */
 
 .btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   padding: 14px 26px;
   border-radius: 4px;
   border: none;
@@ -201,10 +209,11 @@ section[id], header[id] { scroll-margin-top: 84px; }
 /* ---------- arrow links ---------- */
 
 .arrow-link {
-  margin-top: 8px;
+  margin-top: 4px;
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
+  min-height: 44px;          /* comfortable tap target on touch devices */
   font-family: var(--display);
   font-size: 16px;
   letter-spacing: 2px;
@@ -255,7 +264,7 @@ section[id], header[id] { scroll-margin-top: 84px; }
 }
 .nav.scrolled .nav-inner { padding-top: 10px; padding-bottom: 10px; }
 
-.wordmark { display: flex; align-items: baseline; gap: 8px; color: var(--blush); }
+.wordmark { display: flex; align-items: baseline; gap: 8px; color: var(--blush); min-height: 44px; align-content: center; flex-wrap: wrap; }
 .wordmark:hover { color: var(--white); }
 .wordmark-main { font-family: var(--display); font-size: 24px; letter-spacing: 2px; }
 .wordmark-sub { font-family: var(--display); font-size: 14px; letter-spacing: 5px; color: var(--light-gray); }
@@ -265,17 +274,19 @@ section[id], header[id] { scroll-margin-top: 84px; }
 
 .nav-link {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-family: var(--display);
   font-size: 17px;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--light-gray);
-  padding: 4px 0;
 }
 .nav-link::after {
   content: "";
   position: absolute;
-  left: 0; bottom: -2px;
+  left: 0; bottom: 8px;
   width: 100%; height: 2px;
   background: var(--vurple-hover);
   transform: scaleX(0);
@@ -310,7 +321,10 @@ section[id], header[id] { scroll-margin-top: 84px; }
 .nav-toggle[aria-expanded="true"] span:first-child { transform: translateY(4px) rotate(45deg); }
 .nav-toggle[aria-expanded="true"] span:last-child { transform: translateY(-4px) rotate(-45deg); }
 
-@media (max-width: 700px) {
+/* The full nav needs ~950px for the wordmark, five links and the button.
+   Below that it wraps to two lines and pushes the page sideways, so the
+   hamburger has to cover the whole tablet range, not just phones. */
+@media (max-width: 1023px) {
   .nav-toggle { display: flex; }
   .nav-links {
     position: absolute;
@@ -322,11 +336,22 @@ section[id], header[id] { scroll-margin-top: 84px; }
     border-bottom: 1px solid var(--border);
     padding: 8px var(--pad-x) 20px;
     display: none;
+    max-height: calc(100dvh - 100%);
+    overflow-y: auto;
   }
   .nav-links.open { display: flex; }
-  .nav-link { padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .nav-link { padding: 15px 0; border-bottom: 1px solid var(--border); }
   .nav-link::after { display: none; }
-  .btn-nav { margin-top: 16px; }
+  .btn-nav { margin-top: 16px; padding: 15px 20px; }
+}
+
+/* Just above the hamburger the row still only just fits — drop the
+   "ACADEMY" lockup and tighten spacing so it stays on one line. */
+@media (min-width: 1024px) and (max-width: 1219px) {
+  .wordmark-sub { display: none; }
+  .nav-links { gap: 16px; }
+  .nav-link { font-size: 16px; letter-spacing: 1.5px; }
+  .btn-nav { font-size: 15px; padding: 10px 16px; }
 }
 
 /* ---------- hero ---------- */
@@ -357,7 +382,9 @@ section[id], header[id] { scroll-margin-top: 84px; }
   font-family: var(--display);
   font-weight: 400;
   text-transform: uppercase;
-  font-size: clamp(50px, 9.5vw, 128px);
+  /* floor lowered so the headline is never clipped by its reveal mask
+     on a 320px screen */
+  font-size: clamp(38px, 11vw, 128px);
   line-height: 0.92;
   letter-spacing: 2px;
 }
@@ -669,6 +696,7 @@ section[id], header[id] { scroll-margin-top: 84px; }
 .cal-nav-btn:hover:not(:disabled) { border-color: var(--vurple-hover); background: var(--vurple-deep); }
 .cal-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
+.cal-nav { flex-wrap: wrap; }
 .cal-range {
   margin: 0;
   font-family: var(--display);
@@ -676,13 +704,21 @@ section[id], header[id] { scroll-margin-top: 84px; }
   letter-spacing: 3px;
   text-transform: uppercase;
   color: var(--light-gray);
-  min-width: 210px;
+  min-width: 200px;
   text-align: center;
 }
+/* 44+44 buttons + a 200px label overflows a 320px screen */
+@media (max-width: 400px) {
+  .cal-range { min-width: 0; flex: 1; font-size: 17px; letter-spacing: 2px; }
+}
 
+/* The calendar spans the full row rather than sharing it with the list.
+   Side by side, two months got squeezed into ~235px each, giving 30px
+   day cells on desktop — smaller than on a phone. Full width they read
+   properly at every size, which is the point of the two-month view. */
 .events-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: 1fr;
   gap: 28px;
   margin-top: 28px;
   align-items: start;
@@ -726,9 +762,16 @@ section[id], header[id] { scroll-margin-top: 84px; }
 }
 
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+/* Grid items default to min-width:auto and refuse to shrink below their
+   content, which bursts the 7-column track on narrow screens. The outer
+   containers need it too, or the calendar card itself won't shrink. */
+.events-grid > *, .cal-card, .cal-months, .cal-months > *,
+.cal-grid > *, .cal-dow > * { min-width: 0; }
 
 .cal-cell {
   aspect-ratio: 1;
+  min-width: 0;
+  overflow: hidden;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--black);
@@ -755,8 +798,13 @@ section[id], header[id] { scroll-margin-top: 84px; }
 .cal-cell.selected .cal-dot { display: none; }
 .cal-cell.sold-out .cal-dot { background: var(--light-gray); }
 
-.events-list-col { display: flex; flex-direction: column; gap: 12px; }
-.events-list { display: flex; flex-direction: column; gap: 12px; }
+.events-list-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.events-list { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.events-list > * { min-width: 0; }
+/* with the calendar full-width, upcoming events can sit two-up on wide screens */
+@media (min-width: 900px) {
+  .events-list { grid-template-columns: repeat(2, 1fr); }
+}
 
 .event-row {
   display: flex;
@@ -783,12 +831,12 @@ section[id], header[id] { scroll-margin-top: 84px; }
 .event-mon {
   margin: 2px 0 0;
   font-family: var(--display);
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--light-gray);
 }
-.event-info { flex: 1; }
+.event-info { flex: 1; min-width: 0; }
 .event-title { margin: 0; font-weight: 500; font-size: 15px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .event-meta { margin: 2px 0 0; font-size: 13px; color: var(--text-muted); }
 
@@ -1096,8 +1144,8 @@ section[id], header[id] { scroll-margin-top: 84px; }
   text-transform: uppercase;
   color: var(--light-gray);
 }
-.footer-links { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
-.footer-links a { width: fit-content; }
+.footer-links { display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
+.footer-links a { width: fit-content; display: flex; align-items: center; min-height: 44px; }
 
 .footer-blurb { margin: 0 0 14px; font-size: 14px; color: var(--text-muted); line-height: 1.7; }
 
@@ -1132,7 +1180,7 @@ section[id], header[id] { scroll-margin-top: 84px; }
   color: var(--text-muted);
 }
 .footer-social { display: flex; gap: 16px; }
-.footer-social a { color: var(--text-muted); }
+.footer-social a { color: var(--text-muted); display: inline-flex; align-items: center; min-height: 44px; }
 .footer-social a:hover { color: var(--blush); }
 
 /* ---------- scroll reveal system ---------- */
@@ -1265,7 +1313,7 @@ section[id], header[id] { scroll-margin-top: 84px; }
   margin: 0;
   font-family: var(--display);
   font-weight: 400;
-  font-size: clamp(46px, 8vw, 108px);
+  font-size: clamp(36px, 9vw, 108px);
   line-height: 0.94;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -1392,12 +1440,16 @@ section[id], header[id] { scroll-margin-top: 84px; }
 .why-item {
   padding: 24px clamp(14px, 2.5vw, 28px) 26px;
   border-bottom: 1px solid var(--border);
-  border-right: 1px solid var(--border);
   line-height: 1.7;
   color: var(--text-muted);
   font-size: 15px;
 }
-.why-item:last-child { border-right: none; }
+/* vertical rules only when all four sit on one row — otherwise a wrapped
+   item would carry a stray divider at the right edge */
+@media (min-width: 1000px) {
+  .why-item { border-right: 1px solid var(--border); }
+  .why-item:last-child { border-right: none; }
+}
 .why-item::before {
   content: "";
   display: block;
@@ -1528,6 +1580,42 @@ section[id], header[id] { scroll-margin-top: 84px; }
 /* ---------- magnetic buttons ---------- */
 
 .magnetic { will-change: transform; }
+
+/* ---------- small-screen refinements ---------- */
+
+@media (max-width: 420px) {
+  /* reclaim horizontal room so day cells stay tappable */
+  .cal-card { padding: 12px 10px; }
+  .cal-grid, .cal-dow { gap: 3px; }
+  .cal-cell { font-size: 12.5px; }
+  /* the nowrap CTA can't share a line with the title on a 320px screen */
+  .event-row { padding: 16px 14px; gap: 10px 12px; flex-wrap: wrap; }
+  .event-date { min-width: 40px; }
+  .event-row .event-cta { width: 100%; text-align: left; min-height: 40px; }
+  .chip { font-size: 12px; padding: 5px 10px; }
+  .btn-lg { padding: 15px 24px; font-size: 17px; }
+  .hero-ctas .btn { width: 100%; }
+}
+
+/* Landscape phones: 88dvh of hero leaves almost nothing on screen */
+@media (orientation: landscape) and (max-height: 520px) {
+  .hero { min-height: 0; }
+  .hero-content { padding-top: 96px; padding-bottom: 56px; }
+  .hero-scrollcue { display: none; }
+  .page-hero-inner { padding-top: 88px; padding-bottom: 56px; }
+}
+
+/* Tablet: give sections a little more air than the phone layout */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .program-grid { grid-template-columns: repeat(2, 1fr); }
+  .serve-grid { grid-template-columns: repeat(2, 1fr); }
+  .testimonials { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Very wide screens: keep line lengths readable */
+@media (min-width: 1600px) {
+  .section-intro, .sub-lede, .about-bio { max-width: 640px; }
+}
 
 /* ---------- reduced motion ---------- */
 
