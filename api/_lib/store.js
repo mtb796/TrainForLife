@@ -174,6 +174,43 @@ const store = {
     return db.leads.length < before;
   },
 
+  /* ---------------- admin account ----------------
+   * One row. Holds the username and the scrypt hash of the password Venus
+   * chose for herself, so the credentials live in the database rather than
+   * in an environment variable somebody else can read.
+   */
+
+  async getAdminAccount() {
+    if (LIVE) {
+      try {
+        const rows = await sb('admin_account', { query: '?id=eq.1&limit=1' });
+        return (rows && rows[0]) || null;
+      } catch (e) {
+        // The table may not exist yet on a database created before this
+        // feature. Treat that as "no account" so the bootstrap login still
+        // works and the setup screen can explain what to run.
+        if (e.status === 404 || e.status === 400) return null;
+        throw e;
+      }
+    }
+    return readLocal().admin || null;
+  },
+
+  async saveAdminAccount({ username, password_hash }) {
+    const row = { id: 1, username, password_hash, updated_at: new Date().toISOString() };
+    if (LIVE) {
+      await sb('admin_account', {
+        method: 'POST', body: row,
+        prefer: 'resolution=merge-duplicates,return=minimal',
+      });
+      return row;
+    }
+    const db = readLocal();
+    db.admin = row;
+    writeLocal(db);
+    return row;
+  },
+
   async stats() {
     const rows = await store.listLeads({ limit: 1000 });
     const by = (key) => rows.reduce((m, r) => {

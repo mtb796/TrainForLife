@@ -7,7 +7,12 @@
 <title>Content Editor — The Strong Academy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<!-- Loaded without blocking: a stylesheet that has not arrived yet also
+     blocks every script below it, and a CRM that shows a blank screen
+     because a font host is slow is worse than one in a fallback face. -->
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap"
+      rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"></noscript>
 <style>
 :root{
   --black:#000;--dark-gray:#222223;--mid-gray:#616161;--light-gray:#B7B6BA;

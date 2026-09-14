@@ -34,13 +34,39 @@ redeploy. The CRM shows a warning while that's the case.
 
 ## 2. CRM access
 
+Venus signs in at `/admin/crm` with a username and password that **she**
+chooses. The variables below only get her through the door the first time.
+
 | Variable | Value |
 |---|---|
-| `ADMIN_PASSWORD` | the password used at `/admin/crm` |
 | `SESSION_SECRET` | a long random string, e.g. `openssl rand -base64 32` |
+| `ADMIN_USER` | temporary username, e.g. `venus` |
+| `ADMIN_PASSWORD` | temporary password — she replaces it on first sign-in |
 
-Both must be set or the admin API refuses every request — it fails closed
-rather than defaulting open.
+**How first sign-in works.** She signs in with the temporary pair, and the CRM
+immediately makes her choose her own username and password before showing her
+anything. Saving writes a row to `admin_account` with a salted scrypt hash of
+the new password — and from that moment `ADMIN_USER` / `ADMIN_PASSWORD` stop
+being accepted. Whoever set up the deploy no longer has a way in.
+
+She can change either one later from the **Password** button in the CRM header.
+
+`SESSION_SECRET` is different: it signs the session cookie and must stay set.
+Without it the admin API refuses every request — it fails closed rather than
+defaulting open. **Changing it signs everyone out immediately**, which is the
+way to revoke access if a laptop goes missing.
+
+Passwords must be at least 10 characters with a letter and a number. Sign-in
+is limited to 5 attempts a minute per IP address.
+
+### If she forgets her password
+
+There is no reset email — one operator, no mail plumbing. Instead:
+
+1. Delete the stored account: `delete from admin_account;` in the Supabase
+   SQL editor.
+2. That re-arms `ADMIN_USER` / `ADMIN_PASSWORD`. Set a fresh temporary
+   password in Vercel, redeploy, and she goes through first sign-in again.
 
 ## 3. Email notifications
 
@@ -91,8 +117,9 @@ That registers `invitee.created` / `invitee.canceled` against
 
 ```bash
 # from the repo root
-LOCAL_DATA_DIR=./.data ADMIN_PASSWORD=dev SESSION_SECRET=dev-secret \
+LOCAL_DATA_DIR=./.data ADMIN_USER=venus ADMIN_PASSWORD=DevPass2026 SESSION_SECRET=dev-secret \
 CALENDLY_WEBHOOK_KEY=dev-key node scripts/devserver.js 8790
 ```
 
-Leads are written to `.data/crm.json`. That directory is git-ignored.
+Leads and the admin account are written to `.data/crm.json`. That directory is
+git-ignored.

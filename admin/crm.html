@@ -7,7 +7,12 @@
 <title>CRM — The Strong Academy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<!-- Loaded without blocking: a stylesheet that has not arrived yet also
+     blocks every script below it, and a CRM that shows a blank screen
+     because a font host is slow is worse than one in a fallback face. -->
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap"
+      rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"></noscript>
 <style>
 :root{
   --black:#000;--dark-gray:#222223;--mid-gray:#616161;--light-gray:#B7B6BA;
@@ -43,7 +48,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--vurple-h
 label{display:block;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--light-gray);margin-bottom:5px;font-weight:500}
 
 /* gate */
-#gate{min-height:70vh;display:flex;align-items:center;justify-content:center;padding:20px}
+#gate,#setup{min-height:70vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .gate-card{width:min(400px,100%);background:var(--dark-gray);border:1px solid var(--vurple-hover);border-radius:12px;padding:32px;display:flex;flex-direction:column;gap:14px}
 .gate-card h1{margin:0;font-family:var(--display);font-size:32px;letter-spacing:2px;text-transform:uppercase;font-weight:400}
 .gate-card p{margin:0;font-size:14px;color:var(--light-gray);line-height:1.6}
@@ -131,12 +136,44 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bl
     <h1>The Str<span style="color:var(--vurple-hover)">v</span>ng Academy</h1>
     <p>Sign in to view inquiries and bookings.</p>
     <div>
+      <label for="user">Username</label>
+      <input id="user" type="text" autocomplete="username" autocapitalize="off" spellcheck="false">
+    </div>
+    <div>
       <label for="pw">Password</label>
       <input id="pw" type="password" autocomplete="current-password">
     </div>
     <p class="err" id="gateErr" hidden></p>
     <button class="btn-primary" type="submit">Sign in</button>
     <p class="note" id="gateNote" hidden></p>
+  </form>
+</div>
+
+<div id="setup" hidden>
+  <form class="gate-card" id="setupForm">
+    <h1 id="setupTitle">Choose your login</h1>
+    <p id="setupIntro">Pick the username and password you will use from now on.
+      The temporary ones stop working as soon as you save.</p>
+    <div>
+      <label for="suUser">Username</label>
+      <input id="suUser" type="text" autocomplete="username" autocapitalize="off" spellcheck="false">
+    </div>
+    <div>
+      <label for="suCurrent">Current password</label>
+      <input id="suCurrent" type="password" autocomplete="current-password">
+    </div>
+    <div>
+      <label for="suNext">New password</label>
+      <input id="suNext" type="password" autocomplete="new-password">
+    </div>
+    <div>
+      <label for="suConfirm">Repeat new password</label>
+      <input id="suConfirm" type="password" autocomplete="new-password">
+    </div>
+    <p class="note">At least 10 characters, with a letter and a number.</p>
+    <p class="err" id="setupErr" hidden></p>
+    <button class="btn-primary" type="submit">Save and continue</button>
+    <button class="btn-ghost" type="button" id="setupCancel" hidden>Back to the CRM</button>
   </form>
 </div>
 
@@ -148,6 +185,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bl
         <a class="btn btn-ghost" href="./">Content editor</a>
         <a class="btn btn-ghost" href="../">View site</a>
         <button class="btn-ghost" id="refresh">Refresh</button>
+        <button class="btn-ghost" id="changePw">Password</button>
         <button class="btn-ghost" id="logout">Sign out</button>
       </nav>
     </div>
@@ -216,20 +254,49 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bl
   }
 
   /* ---------- auth ---------- */
+  var me = { username:'', mustSetPassword:false };
+
   function show(which){
-    $('#gate').hidden = which !== 'gate';
-    $('#app').hidden  = which !== 'app';
+    $('#gate').hidden  = which !== 'gate';
+    $('#setup').hidden = which !== 'setup';
+    $('#app').hidden   = which !== 'app';
+  }
+
+  /* The setup card does double duty: a forced first-run step, and a
+     voluntary password change later. Only the forced version hides the
+     way out. */
+  function openSetup(forced){
+    $('#suUser').value = me.username || '';
+    $('#suCurrent').value = $('#suNext').value = $('#suConfirm').value = '';
+    $('#setupErr').hidden = true;
+    $('#setupCancel').hidden = !!forced;
+    $('#setupTitle').textContent = forced ? 'Choose your login' : 'Change your login';
+    $('#setupIntro').textContent = forced
+      ? 'Pick the username and password you will use from now on. The temporary ones stop working as soon as you save.'
+      : 'Update the username or password you sign in with.';
+    show('setup');
+    $('#suCurrent').focus();
+  }
+
+  function afterAuth(d){
+    me.username = d.username || '';
+    me.mustSetPassword = !!d.mustSetPassword;
+    if(me.mustSetPassword){ openSetup(true); }
+    else { show('app'); load(); }
   }
 
   fetch(API+'/admin/login').then(function(r){ return r.json(); }).then(function(d){
-    if(d.authed){ show('app'); load(); }
-    else {
-      show('gate');
-      if(!d.configured){
-        var n = $('#gateNote'); n.hidden=false;
-        n.innerHTML = 'Admin access is not configured yet. Set <code>ADMIN_PASSWORD</code> and ' +
-                      '<code>SESSION_SECRET</code> in Vercel, then redeploy.';
-      }
+    if(d.authed){ afterAuth(d); return; }
+    show('gate');
+    var n = $('#gateNote');
+    if(!d.configured){
+      n.hidden=false;
+      n.innerHTML = 'Admin access is not configured yet. Set <code>SESSION_SECRET</code>, ' +
+                    '<code>ADMIN_USER</code> and <code>ADMIN_PASSWORD</code> in Vercel, then redeploy.';
+    } else if(d.needsSetup){
+      n.hidden=false;
+      n.textContent = 'First time here? Sign in with the temporary username and password, ' +
+                      'then choose your own.';
     }
   }).catch(function(){ show('gate'); });
 
@@ -237,14 +304,36 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bl
     e.preventDefault();
     var err = $('#gateErr'); err.hidden = true;
     fetch(API+'/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({password:$('#pw').value})})
+      body:JSON.stringify({username:$('#user').value,password:$('#pw').value})})
       .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
       .then(function(x){
-        if(x.ok && x.d.ok){ show('app'); load(); }
+        if(x.ok && x.d.ok){ $('#pw').value=''; afterAuth(x.d); }
         else { err.textContent = x.d.error || 'Sign in failed.'; err.hidden = false; }
       })
       .catch(function(){ err.textContent='Network error.'; err.hidden=false; });
   });
+
+  $('#setupForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var err = $('#setupErr'); err.hidden = true;
+    if($('#suNext').value !== $('#suConfirm').value){
+      err.textContent = 'The two new passwords do not match.'; err.hidden = false; return;
+    }
+    fetch(API+'/admin/password',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:$('#suUser').value,current:$('#suCurrent').value,
+                           next:$('#suNext').value})})
+      .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+      .then(function(x){
+        if(x.ok && x.d.ok){
+          me.username = x.d.username; me.mustSetPassword = false;
+          show('app'); load();
+        } else { err.textContent = x.d.error || 'Could not save.'; err.hidden = false; }
+      })
+      .catch(function(){ err.textContent='Network error.'; err.hidden=false; });
+  });
+
+  $('#setupCancel').addEventListener('click', function(){ show('app'); });
+  $('#changePw').addEventListener('click', function(){ openSetup(false); });
 
   $('#logout').addEventListener('click', function(){
     fetch(API+'/admin/login',{method:'DELETE'}).then(function(){ location.reload(); });

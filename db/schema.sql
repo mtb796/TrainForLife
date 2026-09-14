@@ -49,3 +49,20 @@ create table if not exists calendly_events (
   payload      jsonb
 );
 alter table calendly_events enable row level security;
+
+-- Who can sign in to the CRM. Exactly one row: this is a single-operator
+-- business, not a multi-user app. The password is stored as a scrypt hash
+-- (salted, slow to brute force) and is written by the CRM itself the first
+-- time Venus signs in, which is what retires the temporary ADMIN_PASSWORD.
+create table if not exists admin_account (
+  id             integer primary key default 1,
+  username       text not null,
+  password_hash  text not null,
+  updated_at     timestamptz not null default now(),
+  constraint admin_account_single_row check (id = 1)
+);
+
+-- Same reasoning as leads: RLS on with no policies means the public key
+-- cannot read the hash even if it leaks. Only the service_role key, used
+-- server-side, can touch this table.
+alter table admin_account enable row level security;
