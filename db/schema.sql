@@ -22,13 +22,18 @@ create table if not exists leads (
   -- new | contacted | booked | won | lost | cancelled
   status        text not null default 'new',
   notes         text,
+  follow_up     date,
   meta          jsonb
 );
+
+-- Safe to re-run on an existing database that predates follow_up.
+alter table leads add column if not exists follow_up date;
 
 create index if not exists leads_created_idx on leads (created_at desc);
 create index if not exists leads_status_idx  on leads (status);
 create index if not exists leads_source_idx  on leads (source);
 create index if not exists leads_email_idx   on leads (email);
+create index if not exists leads_followup_idx on leads (follow_up);
 
 -- Lock the table down. The site talks to Supabase only from serverless
 -- functions using the service_role key, which bypasses RLS. Enabling RLS

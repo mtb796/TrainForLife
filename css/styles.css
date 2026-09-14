@@ -50,6 +50,13 @@
 
 * { box-sizing: border-box; }
 
+/* An author `display` rule beats the UA's [hidden]{display:none}, so any
+   element toggled with el.hidden stays on screen. Bit the newsletter form
+   (it lingered beside its own success message) and the CRM's overlay
+   (an invisible scrim swallowed every click). Defend it globally. */
+[hidden] { display: none !important; }
+
+
 html { scroll-behavior: smooth; }
 
 body {

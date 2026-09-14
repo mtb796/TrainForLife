@@ -17,6 +17,7 @@
   --ease:cubic-bezier(.25,1,.5,1);
 }
 *{box-sizing:border-box}
+[hidden]{display:none !important}
 body{margin:0;background:var(--black);color:var(--blush);font-family:var(--body);font-weight:300;-webkit-font-smoothing:antialiased}
 :focus-visible{outline:2px solid var(--vurple-hover);outline-offset:2px;border-radius:3px}
 a{color:var(--blush)}
@@ -81,6 +82,31 @@ label{display:block;font-size:11px;letter-spacing:1.5px;text-transform:uppercase
 .when{font-size:12px;color:var(--mid-gray);text-align:right}
 @media(max-width:640px){.lead{grid-template-columns:1fr}.lead-side{min-width:0}.when{text-align:left}}
 
+
+/* detail drawer */
+.scrim{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);
+  display:flex;justify-content:flex-end}
+.drawer{width:min(480px,100%);height:100%;background:var(--dark-gray);border-left:1px solid var(--vurple-hover);
+  overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:14px}
+.drawer h3{margin:0;font-family:var(--display);font-weight:400;font-size:28px;letter-spacing:1.5px;text-transform:uppercase;line-height:1.05}
+.drawer .sub{margin:0;font-size:13px;color:var(--light-gray);word-break:break-word}
+.dr-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.dr-close{background:none;border:none;color:var(--light-gray);font-size:26px;line-height:1;cursor:pointer;
+  min-height:44px;min-width:44px;padding:0;border-radius:6px}
+.dr-close:hover{color:var(--blush)}
+.dr-msg{margin:0;font-size:14px;color:var(--light-gray);white-space:pre-wrap;background:var(--black);
+  border:1px solid #2A2A2B;border-radius:8px;padding:12px;max-height:180px;overflow-y:auto}
+.dr-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.dr-row{grid-template-columns:1fr}}
+.saved{font-size:12px;color:var(--ok)}
+
+/* follow-up flags */
+.lead.due{border-left-color:var(--warn)}
+.flag{font-family:var(--display);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+  border-radius:999px;padding:3px 9px;background:rgba(251,191,36,.18);color:var(--warn);white-space:nowrap}
+.lead-main{cursor:pointer}
+.has-note{color:var(--gray);font-size:12px}
+
 .empty{padding:36px;text-align:center;color:var(--light-gray);background:var(--dark-gray);border:1px dashed var(--mid-gray);border-radius:10px}
 .note{font-size:13px;color:var(--light-gray);line-height:1.6}
 .warn{border-left:3px solid var(--contacted);padding-left:12px}
@@ -137,9 +163,11 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bl
       <button class="btn-ghost" id="exportCsv">Export CSV</button>
     </div>
     <div class="chips" id="statusChips"></div>
+    <div class="chips"><button class="chip" id="dueChip">Needs follow-up</button></div>
     <div class="chips" id="sourceChips"></div>
 
     <div class="leads" id="leads"></div>
+    <div class="scrim" id="scrim" hidden></div>
 
     <section class="panel">
       <div class="panel-hd">
@@ -172,7 +200,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bl
   'use strict';
   var $ = function(s){ return document.querySelector(s); };
   var API = '/api';
-  var state = { status:'all', source:'all', q:'', leads:[] };
+  var state = { status:'all', source:'all', q:'', due:false, leads:[] };
 
   var STATUSES = ['all','new','contacted','booked','won','lost','cancelled'];
   var SOURCES  = ['all','waitlist','booking','corporate','newsletter','contact'];
@@ -237,6 +265,12 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bl
   chips($('#statusChips'), STATUSES, 'status');
   chips($('#sourceChips'), SOURCES, 'source');
 
+  $('#dueChip').addEventListener('click', function(){
+    state.due = !state.due;
+    $('#dueChip').classList.toggle('on', state.due);
+    load();
+  });
+
   var t;
   $('#search').addEventListener('input', function(e){
     clearTimeout(t); state.q = e.target.value.trim();
@@ -244,13 +278,15 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bl
   });
 
   $('#exportCsv').addEventListener('click', function(){
-    var qs = new URLSearchParams({status:state.status,source:state.source,q:state.q,format:'csv'});
+    var qs = new URLSearchParams({status:state.status,source:state.source,q:state.q,
+      due:state.due?'1':'',format:'csv'});
     window.location = API+'/admin/leads?'+qs.toString();
   });
 
   /* ---------- leads ---------- */
   function load(){
-    var qs = new URLSearchParams({status:state.status,source:state.source,q:state.q});
+    var qs = new URLSearchParams({status:state.status,source:state.source,q:state.q,
+      due:state.due?'1':''});
     fetch(API+'/admin/leads?'+qs.toString())
       .then(function(r){ if(r.status===401){ show('gate'); throw new Error('auth'); } return r.json(); })
       .then(function(d){
@@ -271,7 +307,7 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bl
   function renderStats(s){
     if(!s) return;
     var host=$('#stats'); host.innerHTML='';
-    var cards=[['Total',s.total]];
+    var cards=[['Total',s.total],['Follow up',s.due||0]];
     ['new','contacted','booked','won'].forEach(function(k){
       cards.push([k, (s.byStatus&&s.byStatus[k])||0]);
     });
@@ -298,15 +334,23 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bl
       if(l.event_title) bits.push(esc(l.event_title));
       if(l.event_date) bits.push(esc(String(l.event_date).slice(0,10)));
 
+      var today=new Date().toISOString().slice(0,10);
+      var overdue = l.follow_up && l.follow_up <= today &&
+        ['new','contacted','booked'].indexOf(l.status||'new')>-1;
+      if(overdue) el.classList.add('due');
+
       el.innerHTML =
-        '<div class="lead-main">'+
+        '<div class="lead-main" role="button" tabindex="0">'+
           '<div class="lead-top">'+
             '<span class="lead-name">'+esc(l.name||'(no name)')+'</span>'+
             '<span class="tag src">'+esc(l.source||'contact')+'</span>'+
             (l.interest?'<span class="tag">'+esc(l.interest)+'</span>':'')+
+            (l.follow_up?'<span class="flag">'+(overdue?'due ':'')+esc(l.follow_up)+'</span>':'')+
           '</div>'+
           '<p class="lead-meta">'+bits.join(' · ')+'</p>'+
           (l.message?'<p class="lead-msg">'+esc(l.message)+'</p>':'')+
+          (l.notes?'<p class="has-note">Note: '+esc(String(l.notes).slice(0,90))+
+             (String(l.notes).length>90?'…':'')+'</p>':'')+
         '</div>'+
         '<div class="lead-side">'+
           '<span class="when">'+esc(when(l.created_at))+'</span>'+
@@ -317,6 +361,12 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bl
           '</select>'+
           '<button class="btn-ghost del" style="font-size:12px;min-height:38px">Delete</button>'+
         '</div>';
+
+      var main = el.querySelector('.lead-main');
+      main.addEventListener('click', function(){ openDrawer(l); });
+      main.addEventListener('keydown', function(e){
+        if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openDrawer(l); }
+      });
 
       el.querySelector('.st').addEventListener('change', function(e){
         var v=e.target.value;
@@ -333,6 +383,82 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bl
       });
 
       host.appendChild(el);
+    });
+  }
+
+
+  /* ---------- detail drawer: notes + follow-up ---------- */
+  var scrim = $('#scrim');
+  var openLead = null;
+
+  function closeDrawer(){
+    scrim.hidden = true; scrim.innerHTML = ''; openLead = null;
+    document.removeEventListener('keydown', drawerKey);
+  }
+  function drawerKey(e){ if(e.key==='Escape') closeDrawer(); }
+
+  function openDrawer(l){
+    openLead = l;
+    var bits=[];
+    if(l.phone) bits.push(esc(l.phone));
+    if(l.event_title) bits.push(esc(l.event_title));
+    if(l.event_date) bits.push(esc(String(l.event_date).slice(0,10)));
+
+    scrim.innerHTML =
+      '<aside class="drawer" role="dialog" aria-modal="true" aria-label="Lead detail">'+
+        '<div class="dr-top">'+
+          '<div>'+
+            '<h3>'+esc(l.name||'(no name)')+'</h3>'+
+            '<p class="sub"><a href="mailto:'+esc(l.email)+'">'+esc(l.email)+'</a></p>'+
+            (bits.length?'<p class="sub">'+bits.join(' \u00b7 ')+'</p>':'')+
+          '</div>'+
+          '<button class="dr-close" type="button" aria-label="Close">&times;</button>'+
+        '</div>'+
+        (l.message?'<div><label>What they sent</label><p class="dr-msg">'+esc(l.message)+'</p></div>':'')+
+        '<div class="dr-row">'+
+          '<div><label for="drStatus">Status</label><select id="drStatus">'+
+            ['new','contacted','booked','won','lost','cancelled'].map(function(v){
+              return '<option value="'+v+'"'+((l.status||'new')===v?' selected':'')+'>'+v+'</option>';
+            }).join('')+'</select></div>'+
+          '<div><label for="drFollow">Follow up on</label>'+
+            '<input id="drFollow" type="date" value="'+esc(l.follow_up||'')+'"></div>'+
+        '</div>'+
+        '<div><label for="drNotes">Notes</label>'+
+          '<textarea id="drNotes" rows="7" placeholder="What was said, what you promised, what happens next\u2026">'+
+          esc(l.notes||'')+'</textarea></div>'+
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">'+
+          '<button class="btn-primary" id="drSave">Save</button>'+
+          '<a class="btn-ghost" href="mailto:'+esc(l.email)+'?subject='+
+            encodeURIComponent('The Strong Academy')+'">Email</a>'+
+          '<span class="saved" id="drSaved" hidden>Saved</span>'+
+        '</div>'+
+        '<p class="note" style="margin-top:auto">Added '+esc(when(l.created_at))+
+          ' \u00b7 source: '+esc(l.source||'contact')+'</p>'+
+      '</aside>';
+    scrim.hidden = false;
+    document.addEventListener('keydown', drawerKey);
+
+    scrim.querySelector('.dr-close').addEventListener('click', closeDrawer);
+    scrim.addEventListener('mousedown', function(e){ if(e.target===scrim) closeDrawer(); });
+    scrim.querySelector('#drNotes').focus();
+
+    scrim.querySelector('#drSave').addEventListener('click', function(){
+      var btn=this; btn.disabled=true;
+      fetch(API+'/admin/leads',{method:'PATCH',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ id:l.id,
+          status:scrim.querySelector('#drStatus').value,
+          follow_up:scrim.querySelector('#drFollow').value,
+          notes:scrim.querySelector('#drNotes').value })})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          btn.disabled=false;
+          if(!d.ok){ alert(d.error||'Could not save.'); return; }
+          Object.assign(l, d.lead||{});
+          var tag=scrim.querySelector('#drSaved');
+          tag.hidden=false; setTimeout(function(){ tag.hidden=true; },1600);
+          load();
+        })
+        .catch(function(){ btn.disabled=false; alert('Network error - not saved.'); });
     });
   }
 

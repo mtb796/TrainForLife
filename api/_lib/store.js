@@ -65,7 +65,7 @@ async function sb(table, { method = 'GET', query = '', body, prefer } = {}) {
 
 const LEAD_FIELDS = [
   'name', 'email', 'phone', 'source', 'interest', 'message',
-  'event_title', 'event_date', 'status', 'calendly_uri', 'meta',
+  'event_title', 'event_date', 'status', 'calendly_uri', 'notes', 'follow_up', 'meta',
 ];
 
 function clean(lead) {
@@ -77,6 +77,8 @@ function clean(lead) {
   out.status = out.status || 'new';
   return out;
 }
+
+const OPEN_STATUSES = ['new', 'contacted', 'booked'];
 
 const store = {
   live: LIVE,
@@ -107,9 +109,14 @@ const store = {
     return rec;
   },
 
-  async listLeads({ status, source, q, limit = 200 } = {}) {
+  async listLeads({ status, source, q, due, limit = 200 } = {}) {
+    const today = new Date().toISOString().slice(0, 10);
     if (LIVE) {
       const parts = [`order=created_at.desc`, `limit=${Math.min(+limit || 200, 1000)}`];
+      if (due) {
+        parts.push(`follow_up=lte.${today}`);
+        parts.push(`status=in.(${OPEN_STATUSES.join(',')})`);
+      }
       if (status && status !== 'all') parts.push(`status=eq.${encodeURIComponent(status)}`);
       if (source && source !== 'all') parts.push(`source=eq.${encodeURIComponent(source)}`);
       if (q) {
@@ -119,6 +126,9 @@ const store = {
       return (await sb('leads', { query: '?' + parts.join('&') })) || [];
     }
     let rows = readLocal().leads;
+    if (due) {
+      rows = rows.filter(r => r.follow_up && r.follow_up <= today && OPEN_STATUSES.includes(r.status));
+    }
     if (status && status !== 'all') rows = rows.filter(r => r.status === status);
     if (source && source !== 'all') rows = rows.filter(r => r.source === source);
     if (q) {
@@ -133,6 +143,11 @@ const store = {
     const allowed = {};
     if (patch.status) allowed.status = String(patch.status).slice(0, 40);
     if (patch.notes !== undefined) allowed.notes = String(patch.notes).slice(0, 4000);
+    if (patch.follow_up !== undefined) {
+      // empty string clears the date rather than storing ''
+      const d = String(patch.follow_up).trim();
+      allowed.follow_up = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
+    }
     if (!Object.keys(allowed).length) return null;
 
     if (LIVE) {
@@ -164,7 +179,10 @@ const store = {
     const by = (key) => rows.reduce((m, r) => {
       const k = r[key] || 'unknown'; m[k] = (m[k] || 0) + 1; return m;
     }, {});
-    return { total: rows.length, byStatus: by('status'), bySource: by('source') };
+    const today = new Date().toISOString().slice(0, 10);
+    const due = rows.filter(r => r.follow_up && r.follow_up <= today &&
+      OPEN_STATUSES.includes(r.status)).length;
+    return { total: rows.length, due: due, byStatus: by('status'), bySource: by('source') };
   },
 };
 

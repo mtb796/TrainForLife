@@ -11,7 +11,7 @@ const { requireAdmin } = require('../_lib/auth');
 const { readBody, json, methodGuard } = require('../_lib/http');
 
 const CSV_COLS = ['id', 'created_at', 'status', 'source', 'name', 'email', 'phone',
-  'interest', 'event_title', 'event_date', 'message', 'notes'];
+  'interest', 'event_title', 'event_date', 'follow_up', 'message', 'notes'];
 
 function toCsv(rows) {
   const esc = (v) => {
@@ -31,7 +31,8 @@ module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const leads = await store.listLeads({
-        status: qp.status, source: qp.source, q: qp.q, limit: qp.limit,
+        status: qp.status, source: qp.source, q: qp.q,
+        due: qp.due === '1', limit: qp.limit,
       });
 
       if (qp.format === 'csv') {
