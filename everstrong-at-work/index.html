@@ -84,6 +84,96 @@
   </div>
 </header>
 
+<!-- WORKWEEK VISUAL -->
+<section class="section container">
+  <figure class="work-visual reveal">
+    <svg class="work-week" viewBox="0 0 1200 560" role="img"
+         aria-label="A sample work week. Each day is a column of meetings, with one hour set aside for an EverSTRONG session — Monday midday, Tuesday morning, Wednesday afternoon, Thursday morning and Friday midday.">
+      <defs>
+        <linearGradient id="sessionFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#9D33D3"/>
+          <stop offset="100%" stop-color="#8400C8"/>
+        </linearGradient>
+        <radialGradient id="glow" cx="50%" cy="40%" r="70%">
+          <stop offset="0%" stop-color="#8400C8" stop-opacity="0.16"/>
+          <stop offset="100%" stop-color="#8400C8" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <rect x="0" y="0" width="1200" height="560" fill="url(#glow)"/>
+
+      <!-- hour rules -->
+      <g stroke="#3a3a3d" stroke-width="1">
+        <line x1="70" y1="60"  x2="1140" y2="60"/>
+        <line x1="70" y1="142" x2="1140" y2="142"/>
+        <line x1="70" y1="224" x2="1140" y2="224"/>
+        <line x1="70" y1="306" x2="1140" y2="306"/>
+        <line x1="70" y1="388" x2="1140" y2="388"/>
+        <line x1="70" y1="470" x2="1140" y2="470"/>
+      </g>
+
+      <!-- hour labels -->
+      <g class="wk-hour" text-anchor="end">
+        <text x="58" y="107">9</text>
+        <text x="58" y="189">11</text>
+        <text x="58" y="271">1</text>
+        <text x="58" y="353">3</text>
+        <text x="58" y="435">5</text>
+      </g>
+
+      <!-- their normal day -->
+      <g class="wk-busy">
+        <rect x="100"  y="68"  width="140" height="66" rx="4"/>
+        <rect x="100"  y="150" width="140" height="66" rx="4"/>
+        <rect x="100"  y="396" width="140" height="66" rx="4"/>
+
+        <rect x="325"  y="68"  width="140" height="66" rx="4"/>
+        <rect x="325"  y="314" width="140" height="66" rx="4"/>
+        <rect x="325"  y="396" width="140" height="66" rx="4"/>
+
+        <rect x="550"  y="68"  width="140" height="66" rx="4"/>
+        <rect x="550"  y="232" width="140" height="66" rx="4"/>
+
+        <rect x="775"  y="232" width="140" height="66" rx="4"/>
+        <rect x="775"  y="314" width="140" height="66" rx="4"/>
+        <rect x="775"  y="396" width="140" height="66" rx="4"/>
+
+        <rect x="1000" y="68"  width="140" height="66" rx="4"/>
+        <rect x="1000" y="150" width="140" height="66" rx="4"/>
+        <rect x="1000" y="314" width="140" height="66" rx="4"/>
+      </g>
+
+      <!-- the hour that changes it -->
+      <g fill="url(#sessionFill)">
+        <rect x="100"  y="232" width="140" height="66" rx="4"/>
+        <rect x="325"  y="150" width="140" height="66" rx="4"/>
+        <rect x="550"  y="314" width="140" height="66" rx="4"/>
+        <rect x="775"  y="150" width="140" height="66" rx="4"/>
+        <rect x="1000" y="232" width="140" height="66" rx="4"/>
+      </g>
+
+      <!-- day labels -->
+      <g class="wk-day" text-anchor="middle">
+        <text x="170"  y="512">MON</text>
+        <text x="395"  y="512">TUE</text>
+        <text x="620"  y="512">WED</text>
+        <text x="845"  y="512">THU</text>
+        <text x="1070" y="512">FRI</text>
+      </g>
+    </svg>
+
+    <figcaption class="work-visual-cap">
+      <p class="eyebrow">Inside the workday</p>
+      <p>One hour, on the calendar, where your team already is. No commute, no membership to
+        forget about, no app nobody opens — programming that fits the week they actually have.</p>
+      <ul class="wk-legend">
+        <li><span class="wk-key wk-key-session" aria-hidden="true"></span>EverSTRONG session</li>
+        <li><span class="wk-key wk-key-busy" aria-hidden="true"></span>Their normal day</li>
+      </ul>
+    </figcaption>
+  </figure>
+</section>
+
 <!-- FRACTIONAL WELLNESS OFFICER -->
 <section class="section container">
   <h2 class="h2 reveal-lines">Fractional Wellness <span class="serif-accent">Officer</span> Services</h2>

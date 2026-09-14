@@ -1058,34 +1058,41 @@ section[id], header[id] { scroll-margin-top: 84px; }
 
 .about-media { display: flex; justify-content: center; }
 
+/* The bio runs long, so a vertically centred portrait leaves a tall empty
+   gutter above and below it. On wide screens let the photo ride alongside
+   the text instead. */
+@media (min-width: 1024px) {
+  .about-grid { align-items: start; }
+  .about-media { position: sticky; top: 108px; }
+}
+
 .headshot {
   width: min(380px, 100%);
-  height: 440px;
+  /* Matches the file exactly, so the frame never stretches the photo. */
+  aspect-ratio: 370 / 428;
+  margin: 0;
   border-radius: 16px;
   border: 1px solid var(--border-2);
+  background: var(--surface-2);
+  overflow: hidden;
+  position: relative;
+}
+.headshot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* A whisper of brand over the photo, and a floor under the lower edge so
+   the frame still reads against the tinted section behind it. */
+.headshot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   background:
-    radial-gradient(120% 90% at 30% 20%, rgba(132, 0, 200, 0.2), transparent 60%),
-    var(--surface-2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-.headshot-mark {
-  font-family: var(--display);
-  font-size: 128px;
-  line-height: 1;
-  color: transparent;
-  -webkit-text-stroke: 2px var(--vurple-hover);
-  opacity: 0.75;
-}
-.headshot-note {
-  font-family: var(--display);
-  font-size: 13px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--light-gray);
+    radial-gradient(120% 80% at 30% 10%, rgba(132, 0, 200, 0.16), transparent 62%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.28), transparent 38%);
 }
 
 .about-copy .h2 { margin-bottom: 16px; }
@@ -1644,4 +1651,66 @@ section[id], header[id] { scroll-margin-top: 84px; }
   .nav.hidden { transform: none; }
   .bg-word, .program-media .plx { transform: none !important; }
   .program-media img { transform: none; filter: none; }
+}
+
+/* ---------- EverSTRONG at Work: the workweek panel ----------
+   A designed diagram rather than a photograph: it says what the offer is
+   (one hour placed inside a week that is already full) in a way a stock
+   photo of people stretching in an office never does. */
+
+.work-visual {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 56px);
+  align-items: center;
+  padding: clamp(20px, 3vw, 40px);
+  border: 1px solid var(--border-2);
+  border-radius: 18px;
+  background: var(--surface-2);
+}
+
+.work-week {
+  width: 100%;
+  height: auto;
+  display: block;
+  min-width: 0;
+}
+.work-week .wk-busy rect { fill: #2a2a2d; stroke: #3f3f43; stroke-width: 1; }
+.work-week .wk-hour {
+  font-family: var(--body);
+  font-size: 22px;
+  fill: var(--light-gray);
+}
+.work-week .wk-day {
+  font-family: var(--display);
+  font-size: 30px;
+  letter-spacing: 3px;
+  fill: var(--blush);
+}
+
+.work-visual-cap p { margin: 0 0 16px; line-height: 1.8; color: var(--text-muted); }
+.work-visual-cap .eyebrow { margin-bottom: 10px; }
+
+.wk-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.wk-legend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--light-gray);
+}
+.wk-key { width: 16px; height: 16px; border-radius: 4px; flex: none; }
+.wk-key-session { background: var(--vurple-hover); }
+.wk-key-busy { background: #2a2a2d; border: 1px solid #3f3f43; }
+
+@media (max-width: 860px) {
+  .work-visual { grid-template-columns: 1fr; }
+}
+
+/* SVG text sizes are viewBox units, so they shrink with the drawing. On a
+   phone the day labels land at about 8px unless they are scaled back up. */
+@media (max-width: 520px) {
+  .work-week .wk-day { font-size: 52px; letter-spacing: 2px; }
+  .work-week .wk-hour { font-size: 40px; }
 }
