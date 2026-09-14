@@ -2,19 +2,17 @@
   "_comment": "Editable site content. Change this file (via /admin or GitHub) and Vercel redeploys automatically. Dates are YYYY-MM-DD. An event with repeat:'weekly' and an 'until' date expands into one entry per week on the site.",
   "integrations": {
     "calendly": {
-      "discovery": "",
-      "single": "",
-      "team": "",
-      "workforce": ""
+      "discovery": "https://calendly.com/iamcoachve/book-a-discovery-call?back=1&month=2026-09",
+      "workforce": "https://calendly.com/iamcoachve/book-a-discovery-call?back=1&month=2026-09"
     },
     "eventbrite": {
       "organizer": "",
       "events": {}
     },
     "packages": {
-      "single": "",
-      "fourpack": "",
-      "twelvepack": ""
+      "single": "https://calendly.com/iamcoachve/single-session-clone?back=1&month=2026-08",
+      "fourpack": "https://calendly.com/iamcoachve/single-session-buy-and-schedule-clone?back=1&month=2026-08",
+      "twelvepack": "https://calendly.com/iamcoachve/strong-start-4-pack-4-sessions-clone?back=1&month=2026-08"
     },
     "waitlist": {
       "endpoint": "/api/lead",

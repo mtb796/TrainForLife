@@ -20,10 +20,8 @@
   //    is connected inside Calendly's own Calendar Connections settings —
   //    no code change needed here once those accounts are linked.
   var CALENDLY = {
-    discovery: '',  // e.g. 'https://calendly.com/thestrongacademy/discovery-call'
-    single: '',     // e.g. 'https://calendly.com/thestrongacademy/1-1-session'
-    team: '',       // e.g. 'https://calendly.com/thestrongacademy/teamstrong-class'
-    workforce: ''   // e.g. 'https://calendly.com/thestrongacademy/workforce-consult'
+    discovery: '',  // 1:1 Discovery Call - Find your Fit (15 min)
+    workforce: ''   // EverSTRONG At Work (30 min)
   };
 
   // 2. EVENTBRITE — organizer page plus per-event ticket URLs.
@@ -36,9 +34,9 @@
   // 3. PACKAGE CHECKOUT — Stripe/Square/Calendly paid-event links.
   //    Empty values send the visitor to the scheduler instead.
   var PACKAGES = {
-    single:     { name: 'Single Session',        svc: 'single', checkoutUrl: '' },
-    fourpack:   { name: 'Strong Start · 4-Pack', svc: 'single', checkoutUrl: '' },
-    twelvepack: { name: 'The Commitment · 12-Pack', svc: 'single', checkoutUrl: '' }
+    single:     { name: 'Single Session',        svc: 'discovery', checkoutUrl: '' },
+    fourpack:   { name: 'Strong Start · 4-Pack', svc: 'discovery', checkoutUrl: '' },
+    twelvepack: { name: 'The Commitment · 12-Pack', svc: 'discovery', checkoutUrl: '' }
   };
 
   /* ============================================================ */
@@ -56,10 +54,10 @@
   var MON_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   var SERVICES = [
-    { id: 'discovery', name: 'Discovery Call', dur: '15 min', meta: 'Phone or video · find your fit' },
-    { id: 'single', name: '1:1 Coaching Session', dur: '60 min', meta: 'Movement assessment included' },
-    { id: 'team', name: 'TeamSTRONG Class', dur: '45 min', meta: 'Long Bridge Park · all levels' },
-    { id: 'workforce', name: 'EverSTRONG at Work', dur: '30 min', meta: 'Workshops, pop-ups & proposals' }
+    { id: 'discovery', name: '1:1 Discovery Call \u2014 Find your Fit', dur: '15 min',
+      meta: 'Phone or video \u00b7 find your fit' },
+    { id: 'workforce', name: 'EverSTRONG At Work', dur: '30 min',
+      meta: 'Corporate wellness \u00b7 workshops, pop-ups & proposals' }
   ];
 
   /* ============ events data ============
@@ -123,7 +121,9 @@
     { label: 'One-on-one attention', v: 'solo' },
     { label: 'At my workplace', v: 'corp' }
   ];
-  var SVC_FOR_RESULT = { ever: 'discovery', team: 'team', solo: 'single', corp: 'workforce' };
+  // 'team' and 'single' were retired as bookable services, so every personal
+  // result now routes to the discovery call; corporate keeps its own option.
+  var SVC_FOR_RESULT = { ever: 'discovery', team: 'discovery', solo: 'discovery', corp: 'workforce' };
 
   function resolveQuiz(goal, style) {
     if (goal === 'corp' || style === 'corp') return 'corp';
