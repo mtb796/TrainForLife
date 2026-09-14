@@ -25,6 +25,18 @@ module.exports = async function handler(req, res) {
   const sess = auth.session(req);
   const username = String(body.username || sess.username || '').trim();
 
+  // On Vercel without a database the account would be written to the
+  // function's own disk and vanish on the next deploy — she would silently
+  // lose the password she just chose. Say so instead. Locally the JSON
+  // fallback persists, so development is unaffected.
+  if (process.env.VERCEL && !require('../_lib/store').live) {
+    return json(res, 503, {
+      ok: false,
+      error: 'Connect the database first (SUPABASE_URL and SUPABASE_SERVICE_KEY), ' +
+             'or a new password would be lost on the next deploy.',
+    });
+  }
+
   try {
     // Re-check the current password even though they are already signed in:
     // a borrowed open laptop should not be enough to lock the owner out.
